@@ -1,0 +1,21 @@
+{
+  "DISTRIBUTED" : {
+    "MASTER" : {
+      "NAME": "MASTER",
+      "HOST" : "127.0.0.1",
+      "PORT" : 9998
+    },
+    "SERVER" : {
+      "NAME": "SERVER",
+      "HOST" : "127.0.0.1",
+      "PORT" : 9999,
+      "APP": ["demo.base.app.serverapp"]
+    },
+    "CLIENT" : {
+      "NAME": "CLIENT",
+      "HOST" : "127.0.0.1",
+      "APP": ["demo.base.app.clientapp"],
+      "REMOTE" : ["SERVER"]
+    }
+  }
+}
