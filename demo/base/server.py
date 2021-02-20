@@ -25,10 +25,17 @@
 #
 #
 #
-from txfirefly.master import MasterNode
-from txfirefly.server import ServerNode
-from txrpc.rpc import RPCServer
+import json
+
+from txfirefly.core.server import ServerNode
+from txrpc.globalobject import GlobalObject
+from txrpc.server import RPCServer
 from txrpc.utils import logger
+
+NODE_NAME = "SERVER"
+
+with open("config.json","r") as f:
+    GlobalObject().config = json.load(f)
 
 logger.init()
 
@@ -40,12 +47,15 @@ def fun():
     d.addErrback(logger.err)
     return d
 
+server = ServerNode("SERVER")
+
+@server.childConnectHandle
 def doChildConnect(name, transport):
     '''
     :return
     '''
     logger.debug("{} connected".format(name))
-
+    
     # d = RPCServer.callRemote("CLIENT", "client_test")
     # if not d:
     #     return None
@@ -54,22 +64,15 @@ def doChildConnect(name, transport):
     
     from twisted.internet import reactor
     reactor.callLater(1, fun)
-
+    
     # for i in range(1000):
     #     reactor.callLater(i * 2 + 1, fun)
 
+@server.childLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return
     '''
     logger.debug("{} lost connect".format(childId))
 
-server = ServerNode("SERVER",9999,service_path="demo.base.app.serverapp")
-server.connectMaster({
-    "SRC_NAME" : "server",
-    "PORT" : 9998,
-    "HOST" : "127.0.0.1"
-})
-server.setDoWhenChildConnect(doChildConnect)
-server.setDoWhenChildLostConnect(doChildLostConnect)
 server.run()

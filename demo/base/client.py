@@ -25,17 +25,16 @@
 #
 #
 #
-from txfirefly.client import ClientNode
-from txfirefly.master import MasterNode
-from txfirefly.server import ServerNode
+import json
+
+from txfirefly.core.client import ClientNode
+from txrpc.globalobject import GlobalObject
 from txrpc.utils import logger
+
+with open("config.json","r") as f:
+	GlobalObject().config = json.load(f)
 
 logger.init()
 
-server = ClientNode()
-server.connectMaster({
-	"SRC_NAME" : "CLIENT",
-	"PORT" : 9998,
-	"HOST" : "127.0.0.1"
-})
-server.run()
+app = ClientNode("CLIENT")
+app.run()

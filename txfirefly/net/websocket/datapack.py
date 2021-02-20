@@ -1,8 +1,8 @@
 # !/usr/bin/env Python3
 # -*- coding: utf-8 -*-
 # @Author   : joe lin
-# @FILE     : server.py
-# @Time     : 2021-02-18 23:26
+# @FILE     : datapack.py
+# @Time     : 2021-02-20 0:59
 # @Software : txfirefly
 # @Email    : jackwmj12@163.com
 # @Github   : 
@@ -25,12 +25,15 @@
 #
 #
 #
-from txfirefly.leafnode import leafNode
-from txrpc.rpc import RPCServer
-from txfirefly.core import *
-
-class ServerNode(RPCServer,leafNode):
-	"""
-	:param
-	"""
+class DataPackProtoc:
 	
+	def unpack(self, data):
+		'''
+		解包
+		'''
+		return {'result': True, 'command': "relay", "request": data}
+	
+	def pack(self, data):
+		'''打包数据包
+		'''
+	# return data

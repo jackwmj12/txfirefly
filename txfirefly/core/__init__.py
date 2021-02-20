@@ -25,7 +25,6 @@
 #
 #
 #
-from typing import List
 
 from txrpc.distributed.node import RemoteObject
 from txrpc.globalobject import GlobalObject
@@ -34,7 +33,7 @@ from txrpc.utils import logger
 GlobalObject().masterremote = None # master的远端节点（所有节点除了master自身都需要连接该节点）
 GlobalObject().remote_map = {}  # master 下保存的连接信息放于此处
 
-def master_conncet(master : dict):
+def master_conncet(name : str,master : dict = None):
     '''
     :param
         master : dict {
@@ -44,11 +43,11 @@ def master_conncet(master : dict):
         }
     '''
     # master_config = GlobalObject().config.get("DISTRIBUTED", {}).get("MASTER", {})
-    #
+    
     logger.debug(f"master node is runing on {master}")
     
     # # GlobalObject().masterremote = RemoteMasterObject(service_config.get("NAME"))
-    GlobalObject().masterremote = RemoteObject(master.get("SRC_NAME"))
+    GlobalObject().masterremote = RemoteObject(name)
     
     logger.debug("Connecting into master node...")
 
