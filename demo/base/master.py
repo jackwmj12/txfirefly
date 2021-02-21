@@ -26,7 +26,6 @@
 #
 #
 import json
-import os
 
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import logger
@@ -36,7 +35,7 @@ logger.init()
 with open("config.json","r") as f:
 	GlobalObject().config = json.load(f)
 
-from txfirefly.core.master import MasterNode
+from txfirefly.master import MasterNode
 
 master = MasterNode("MASTER")
 master.run()

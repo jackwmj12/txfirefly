@@ -27,7 +27,7 @@
 #
 import json
 
-from txfirefly.core.server import ServerNode
+from txfirefly.server import ServerNode
 from txrpc.globalobject import GlobalObject
 from txrpc.server import RPCServer
 from txrpc.utils import logger
