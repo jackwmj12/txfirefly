@@ -25,7 +25,7 @@
 #
 #
 #
-from typing import List
+from typing import List, Union
 
 
 class RpcRestful():
@@ -51,7 +51,7 @@ class RpcRestful():
 	ERROR = 500
 
 	@classmethod
-	def success(cls,data=None,messages : List = []):
+	def success(cls,data=None,messages : Union[List,bytes] = []):
 		return {
 			"code": cls.SUCCESS,
 			"data": data,
@@ -59,7 +59,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def login(cls,data=None,messages : List = []):
+	def login(cls,data=None,messages : Union[List,bytes] = []):
 		return {
 			"code": cls.LOGIN,
 			"data": data,
@@ -67,7 +67,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def relay(cls,data=None,messages : List = []):
+	def relay(cls,data=None,messages : Union[List,bytes] = []):
 		return {
 			"code" : cls.RELAY,
 			"data": data,
@@ -75,7 +75,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def close(cls, data=None, messages : List = []):
+	def close(cls, data=None, messages : Union[List,bytes] = []):
 		return {
 			"code": cls.CLOSE,
 			"data": data,
@@ -83,7 +83,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def error(cls, data=None, messages : List = []):
+	def error(cls, data=None, messages : Union[List,bytes] = []):
 		return {
 			"code": cls.ERROR,
 			"data": data,
