@@ -37,6 +37,7 @@ def doChildConnect(name, transport):
 	logger.debug(f"{transport.broker.transport.sessionno} connected")
 	
 	name = name.upper()
+	
 	logger.debug("{} connected".format(name))
 	
 	distributed_config = GlobalObject().config.get("DISTRIBUTED", {})
@@ -44,6 +45,7 @@ def doChildConnect(name, transport):
 	node_config = distributed_config.get(name, {})
 	
 	child_host = transport.broker.transport.client[0]  # 保存子节点ip信息
+	
 	# 远程端口信息存入root_list
 	# 获取远程端口配置，以及名称 一般为10000，gate
 	remotes = node_config.get('REMOTE', [])
@@ -51,8 +53,8 @@ def doChildConnect(name, transport):
 	
 	# 本端口信息存入global对象
 	# 包含子节点的IP信息 子节点的父节点信息
-	GlobalObject().remote_map[name] = dict(node_config,
-	                                       **{"HOST": child_host, "ID": transport.broker.transport.sessionno})
+	GlobalObject().remote_map[name] = dict(node_config,**{"HOST": child_host, "ID": transport.broker.transport.sessionno})
+	
 	logger.debug(f"当前任务节点信息:{GlobalObject().remote_map[name]}")
 	
 	# 通知该节点去连接所有他需要连接的节点
