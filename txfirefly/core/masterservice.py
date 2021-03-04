@@ -60,6 +60,7 @@ def remoteConnect(name, remote : dict,app : List[str]):
     GlobalObject().remote[remote_name] = RemoteObject(name)
     GlobalObject().remote[remote_name].setWeight(weight)
     GlobalObject().remote[remote_name].connect((host, port))
+    logger.debug(f"当前节点 : {name} 连接节点 : {remote_name} 成功 准备导入服务 : {app}")
     delay_import(app)
 
 @masterserviceHandle

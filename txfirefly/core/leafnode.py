@@ -25,7 +25,6 @@
 #
 #
 #
-from txrpc.server import RPCServer
 from txfirefly.core import *
 
 class leafNode:
