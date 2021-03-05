@@ -25,14 +25,19 @@
 #
 #
 #
+import os
+if os.name == "nt":
+    try:
+        import certifi
+        os.environ["SSL_CERT_FILE"] = certifi.where()
+    except Exception as e:
+        print(e)
+
 import datetime
 import decimal
 import json
 from urllib.parse import urlencode
-
-import treq
 from requests.auth import _basic_auth_str
-from twisted.internet import reactor
 from twisted.web.client import Agent, readBody
 from twisted.web.http_headers import Headers
 from zope.interface import implementer
@@ -77,7 +82,7 @@ class BytesProducer(object):
     def stopProducing(self):
         pass
 
-class Request(object):
+class FFrequest(object):
     '''
         twisted异步HTTP请求
     '''
@@ -101,24 +106,20 @@ class Request(object):
         ).addCallbacks(cls._getResult, cls._getError)
 
     @classmethod
-    def post(cls,url=None,data=None, **kwargs):
+    def post(cls, url=None, data=None, headers=None, **kwargs):
         '''
 		发起post请求
 		:param kwargs:
 			url 路径
-			params 参数内容
-				（该参数会随着url一起明文发送）
-			header 头
-				demo:[{
-					'Content-Type': ['application/json', "charset=UTF-8"]
-				}]
-				demo:[{
-					'Content-Type': ['application/x-www-form-urlencoded']
-				}]
-			form 主体
-				（该参数会在body处发送）
+			data 参数内容
+			headers 头
+				demo: {b'Content-Type': [b'application/json']}
+				demo:{b'Content-Type': [b'application/x-www-form-urlencoded']}
 		:return:
 		'''
+
+        if headers is None:
+            headers = {b'Content-Type': [b'application/json']}
 
         assert url != None,"url 不能为空"
 
@@ -127,8 +128,9 @@ class Request(object):
             kwargs["auth"] = (auth["username"], auth["password"])
 
         return treq.post(
-            url.encode(),
+            url,
             data,
+            headers=headers,
             **kwargs
         ).addCallbacks(cls._getResult, cls._getError)
 
@@ -173,7 +175,7 @@ class Request(object):
         # print(err)
         raise Exception(err)
 
-# class Request(object):
+# class FFrequest(object):
 #     '''
 #         twisted异步HTTP请求
 #     '''
@@ -189,6 +191,8 @@ class Request(object):
 #             body 主体
 #         :return:
 #         '''
+#         from twisted.internet import reactor
+#
 #         agent = Agent(reactor,WebClientContextFactory())
 #         url = kwargs.get('url',None)
 #         params = urlencode(kwargs.get('params',None))
@@ -234,11 +238,12 @@ class Request(object):
 #                 （该参数会在body处发送）
 #         :return:
 #         '''
+#         from twisted.internet import reactor
 #
 #         agent = Agent(reactor,WebClientContextFactory())
 #         url = kwargs.get('url', None)
 #         params = kwargs.get('params', None)
-#         body = kwargs.get('form', None)
+#         body = kwargs.get('data', None)
 #         auth = kwargs.get('auth',None)
 #
 #         header = kwargs.get('header', {
@@ -288,7 +293,7 @@ class Request(object):
 #         # d.addCallback(cls._getBody)
 #         # return d
 #         return readBody(response)\
-#             .addCallback(cls._getBody).addErrback(DefferedErrorHandle)
+#             .addCallback(cls._getBody).addErrback(logger.error)
 #
 #     @classmethod
 #     def _getError(cls,err):

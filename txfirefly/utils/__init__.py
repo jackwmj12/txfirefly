@@ -25,6 +25,7 @@
 #
 #
 #
+from txfirefly.utils.rpcrestful import RpcRestful
 from txrpc.utils import logger
 
 
@@ -37,3 +38,14 @@ def DefferedErrorHandle(err,tag = None):
     else:
         msg = "服务器内部错误:{}".format(err)
         logger.err(msg)
+
+def RpcDefferedErrorHandle(err,tag = None):
+    '''延迟对象的错误处理'''
+
+    if tag:
+        msg = "客户端:{} :{}".format(tag, err)
+        logger.err(msg)
+    else:
+        msg = "服务器内部错误:{}".format(err)
+        logger.err(msg)
+    return RpcRestful.error()
