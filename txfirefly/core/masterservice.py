@@ -50,6 +50,7 @@ def remoteConnect(name, remote : dict,app : List[str]):
             HOST : str,
             WEIGHT : int,
         }
+        :app 需要导入的服务路径
         :return:
         '''
     remote_name = remote.get("NAME")

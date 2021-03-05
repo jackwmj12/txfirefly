@@ -28,6 +28,7 @@
 import json
 
 from txfirefly.server import ServerNode
+from txrpc.distributed.manager import RemoteUnFindedError
 from txrpc.globalobject import GlobalObject
 from txrpc.server import RPCServer
 from txrpc.utils import logger
@@ -39,12 +40,15 @@ with open("config.json","r") as f:
 
 logger.init()
 
+from twisted.internet import reactor
+
 def fun():
     d = RPCServer.callRemote("CLIENT", "client_test")
     if not d:
-        return None
-    d.addCallback(logger.debug)
-    d.addErrback(logger.err)
+        reactor.stop()
+    else:
+        d.addCallback(logger.debug)
+        d.addErrback(lambda ign : reactor.stop())
     return d
 
 server = ServerNode("SERVER")
@@ -61,12 +65,10 @@ def doChildConnect(name, transport):
     #     return None
     # d.addCallback(logger.debug)
     # d.addErrback(logger.err)
+    # reactor.callLater(1, fun)
     
-    from twisted.internet import reactor
-    reactor.callLater(1, fun)
-    
-    # for i in range(1000):
-    #     reactor.callLater(i * 2 + 1, fun)
+    for i in range(100000):
+        reactor.callLater(i * 0.2 + 1, fun)
 
 @server.childLostConnectHandle
 def doChildLostConnect(childId):
