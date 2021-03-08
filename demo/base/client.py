@@ -25,11 +25,22 @@
 #
 #
 #
+import asyncio
+
+from twisted.internet import asyncioreactor
+
+loop = asyncio.get_event_loop()
+asyncioreactor.install(eventloop=loop)
+
 import json
 
+import aiohttp
+from twisted.internet import defer
+
 from txfirefly.client import ClientNode
+from txfirefly.exts.ffrequest import FFrequest
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger
+from txrpc.utils import logger, asDeferred
 
 with open("config.json","r") as f:
 	GlobalObject().config = json.load(f)
@@ -37,4 +48,29 @@ with open("config.json","r") as f:
 logger.init()
 
 app = ClientNode("CLIENT")
+
+@app.startServiceHandle
+def start():
+	logger.debug("i am start")
+
+@app.startServiceHandle
+@defer.inlineCallbacks
+def start2():
+	# async with aiohttp.ClientSession() as session:
+	# 	url = 'http://httpbin.org'
+	# 	async with session.get(url) as response:
+	# 		logger.debug(response.status)
+	# 		logger.debug(response.text())
+	ret = yield FFrequest.get("http://httpbin.org")
+	# logger.debug(ret)
+	defer.returnValue(ret)
+
+@app.startServiceHandle
+async def start3():
+	async with aiohttp.ClientSession() as session:
+		url = 'http://httpbin.org'
+		async with session.get(url) as response:
+			logger.debug(response.status)
+			# logger.debug(await response.text())
+
 app.run()

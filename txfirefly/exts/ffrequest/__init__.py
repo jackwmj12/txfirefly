@@ -26,6 +26,9 @@
 #
 #
 import os
+
+import treq
+
 if os.name == "nt":
     try:
         import certifi
@@ -141,10 +144,15 @@ class FFrequest(object):
         :param code:
         :return:
         '''
+        # logger.debug(response)
         # defer.returnValue(response.decode())
         # print(response)
         # return response.decode()
-        return json.loads(response.decode())
+        response = response.decode()
+        try:
+            return json.loads(response)
+        except Exception as e:
+            return response
 
     @classmethod
     def _getResult(cls,response):
@@ -153,10 +161,10 @@ class FFrequest(object):
         :param response:
         :return:
         '''
-        # print('Response version:', response.version)
-        # print('Response code:', response.code)
-        # print('Response phrase:', response.phrase)
-        # print('Response headers:')
+        # logger.debug(f'Response version : {response.version}')
+        # logger.debug(f'Response code : {response.code}')
+        # logger.debug(f'Response phrase : {response.phrase}')
+        # logger.debug(f'Response headers : {response.headers}')
         # logger.msg(pformat(list(response.headers.getAllRawHeaders())))
         # d = readBody(response)
         # d.addCallback(cls._getBody)

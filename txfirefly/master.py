@@ -116,3 +116,4 @@ class MasterNode(RPCServer):
 		GlobalObject().root.childConnectService.mapTarget(doChildConnect)
 		GlobalObject().root.childLostConnectService.mapTarget(doChildLostConnect)
 
+

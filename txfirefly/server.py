@@ -34,4 +34,9 @@ class ServerNode(RPCServer,leafNode):
 	"""
 	def __init__(self, name: str):
 		super(ServerNode, self).__init__(name)
-		self.connectMaster()
+	
+	def run(self):
+		from twisted.internet import reactor
+		d = self._doWhenStart()
+		d.addCallback(lambda ign : self.connectMaster())
+		reactor.run()
