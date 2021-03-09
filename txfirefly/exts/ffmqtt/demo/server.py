@@ -27,8 +27,6 @@
 #
 import sys
 
-from twisted.internet import reactor
-
 from txfirefly.exts.ffmqtt.server import MQTTFactory
 from txrpc.utils import logger
 
@@ -36,11 +34,13 @@ PORT = 5982
 
 def loopSendMessage(factory):
 	''':param'''
+	from twisted.internet import reactor
 	factory.publish(topic=b"test", message=b"hello world")
 	reactor.callLater(300, loopSendMessage, factory)
 
 if __name__ == '__main__':
 	from twisted.python import log
+	from twisted.internet import reactor
 	
 	log.FileLogObserver.timeFormat = '%Y-%m-%d %H:%M:%S'
 	

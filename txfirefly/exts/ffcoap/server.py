@@ -30,7 +30,7 @@ import datetime
 
 from twisted.internet import defer
 from twisted.internet.protocol import DatagramProtocol
-from twisted.internet import reactor
+
 from twisted.python import log
 
 import txthings.resource as resource
@@ -107,6 +107,8 @@ class SeparateLargeResource(resource.CoAPResource):
         self.addParam(resource.LinkParam("title", "Large resource."))
 
     def render_GET(self, request):
+        from twisted.internet import reactor
+        
         d = defer.Deferred()
         reactor.callLater(3, self.responseReady, d, request)
         return d

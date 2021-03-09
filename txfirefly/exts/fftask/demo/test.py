@@ -31,7 +31,7 @@ import time
 
 from txfirefly.exts.fftask import Task, PARALLEL_STYLE, SchedulTask, TaskManager, runSchedul
 from txrpc.utils import logger
-from twisted.internet import reactor
+
 
 SCHEDUL_TIME = 5
 
@@ -93,6 +93,8 @@ class test4(SchedulTask):
 
 
 if __name__ == '__main__':
+	from twisted.internet import reactor
+	
 	task = test4()
 	reactor.callLater(1, task.run)
 	reactor.callLater(5, task.cancel)

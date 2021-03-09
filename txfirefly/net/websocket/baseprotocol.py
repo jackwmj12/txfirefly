@@ -27,7 +27,6 @@
 #
 
 from autobahn.twisted import WebSocketServerProtocol, WebSocketServerFactory
-from twisted.internet import reactor
 from twisted.protocols import policies
 from txzmq import ZmqRequestTimeoutError
 
@@ -107,12 +106,16 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
         '''线程安全的向客户端发送数据
         @param data: str 要向客户端写的数据
         '''
+        from twisted.internet import reactor
+        
         if not self.transport.connected or data is None:
             return
         senddata = self.factory.produceResult(data, command)
         reactor.callFromThread(self.sendMessage, senddata, isBinary=True)
 
     def safeToWriteJson(self,json_):
+        from twisted.internet import reactor
+        
         if not self.transport.connected or not json_:
             return
         reactor.callFromThread(self.sendMessage, json_, isBinary=False)

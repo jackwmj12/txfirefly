@@ -28,9 +28,9 @@
 
 import hashlib
 
-from twisted.internet import reactor, task
+from twisted.internet import task
 
-from txfirefly.exts.ffrequest import Request
+from txfirefly.exts.ffrequest import FFrequest
 
 
 def doGet(**kwargs):

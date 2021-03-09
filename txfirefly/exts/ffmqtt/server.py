@@ -26,7 +26,6 @@
 #
 #
 from twisted.internet.protocol import Factory
-from twisted.internet import reactor
 from txfirefly.exts.ffmqtt.mqtt import MQTTProtocol
 from txfirefly.net.common.manager import ConnectionManager
 from txrpc.utils import logger

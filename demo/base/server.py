@@ -25,9 +25,11 @@
 #
 #
 #
-import asyncio
 
-from twisted.internet import asyncioreactor
+
+from twisted.internet import asyncioreactor, defer
+
+import asyncio
 
 loop = asyncio.get_event_loop()
 asyncioreactor.install(eventloop=loop)
@@ -35,7 +37,7 @@ asyncioreactor.install(eventloop=loop)
 import json
 
 import aiohttp
-
+import treq
 from txfirefly.exts.ffrequest import FFrequest
 from txfirefly.server import ServerNode
 from txrpc.distributed.manager import RemoteUnFindedError
@@ -50,9 +52,11 @@ with open("config.json","r") as f:
 
 logger.init()
 
-from twisted.internet import reactor
+
 
 def fun():
+    from twisted.internet import reactor
+    
     d = RPCServer.callRemote("CLIENT", "client_test")
     if not d:
         reactor.stop()
@@ -68,6 +72,8 @@ def doChildConnect(name, transport):
     '''
     :return
     '''
+    from twisted.internet import reactor
+    
     logger.debug("{} connected".format(name))
     
     # d = RPCServer.callRemote("CLIENT", "client_test")
@@ -89,10 +95,12 @@ async def fun2(name, transport):
             logger.debug(response.status)
             # logger.debug(await response.text())
 
-@server.childLostConnectHandle
-def fun3(name):
-    ret = yield FFrequest.get("http://httpbin.org")
-    # logger.debug(ret)
+@server.startServiceHandle
+@defer.inlineCallbacks
+def fun3():
+    resp = yield treq.get("http://httpbin.org")
+    ret = yield treq.content(resp)
+    logger.debug(ret)
     return ret
 
 @server.childLostConnectHandle

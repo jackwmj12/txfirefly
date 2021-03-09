@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
     <content url="file://$MODULE_DIR$/../txrpc" />
-    <orderEntry type="jdk" jdkName="Python 3.7 (py37-twisted)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.7 (py37-fastapi)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">
