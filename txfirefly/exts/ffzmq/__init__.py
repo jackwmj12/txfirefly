@@ -29,11 +29,11 @@ import zmq
 from txzmq import ZmqRequestTimeoutError, ZmqPubConnection, ZmqFactory, ZmqEndpoint, ZmqSubConnection, ZmqREQConnection, \
 	ZmqREPConnection, ZmqPushConnection, ZmqPullConnection
 
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 def onPrint(reply):
-	logger.msg("Got reply: %s" % (reply))
+	logger.info("Got reply: %s" % (reply))
 
 def onTimeout(fail):
 	fail.trap(ZmqRequestTimeoutError)
@@ -78,13 +78,13 @@ class ZMQfactory():
 			else:
 				self.sub_.subscribe(b'')
 		else:
-			logger.err("请初始化SUB端口")
+			logger.error("请初始化SUB端口")
 	
 	def set_callback(self):
 		if self.sub_:
 			self.sub_.gotMessage = self.subscribeReceived
 		else:
-			logger.err("请初始化SUB端口")
+			logger.error("请初始化SUB端口")
 	
 	def subscribeReceived(self, *args):
 		'''
@@ -136,7 +136,7 @@ class ZMQfactory():
 			d = self.req_.sendMsg(data, timeout=self.timeout)
 			d.addCallback(callBack).addErrback(errBack)
 		except Exception as e:
-			logger.err(e)
+			logger.error(e)
 	
 	# push pull 相关
 	def add_push(self, endpoint):
@@ -170,4 +170,4 @@ class ZMQfactory():
 		try:
 			self.push_.push(data)
 		except zmq.error.Again:
-			logger.err("Skipping, no pull consumers...")
+			logger.error("Skipping, no pull consumers...")

@@ -40,12 +40,13 @@ from twisted.internet import defer
 from txfirefly.client import ClientNode
 from txfirefly.exts.ffrequest import FFrequest
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger, asDeferred
+from txrpc.utils import asDeferred
 
+from txrpc.utils import log
+
+logger = log.init()
 with open("config.json","r") as f:
 	GlobalObject().config = json.load(f)
-
-logger.init()
 
 app = ClientNode("CLIENT")
 

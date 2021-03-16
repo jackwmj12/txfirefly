@@ -27,7 +27,7 @@
 #
 from txzmq import ZmqPubConnection, ZmqFactory, ZmqEndpoint, ZmqSubConnection, ZmqPullConnection, ZmqPushConnection
 
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 class pushMode():
@@ -51,7 +51,7 @@ class pushMode():
 		if self._push:
 			self._push.push(data)
 		else:
-			logger.err("Skipping, no pull consumers...")
+			logger.error("Skipping, no pull consumers...")
 
 
 class pullMode():
@@ -78,4 +78,4 @@ class pullMode():
         '''
 		# defer_tool = self.service.callTarget(*args)
 		# return defer_tool
-		logger.msg(args)
+		logger.info(args)

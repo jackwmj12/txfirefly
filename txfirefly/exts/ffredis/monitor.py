@@ -29,7 +29,7 @@ from __future__ import print_function
 
 import txredisapi
 
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 class monitorProtocol(txredisapi.MonitorProtocol):
@@ -47,10 +47,10 @@ class monitorProtocol(txredisapi.MonitorProtocol):
 		self.monitor()
 	
 	def messageReceived(self, message):
-		logger.msg(">> %s" % message)
+		logger.info(">> %s" % message)
 	
 	def connectionLost(self, reason):
-		logger.msg("lost connection:{}".format(reason))
+		logger.info("lost connection:{}".format(reason))
 
 
 class monitorFactory(txredisapi.MonitorFactory):

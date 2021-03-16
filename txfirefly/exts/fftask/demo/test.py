@@ -30,7 +30,7 @@
 import time
 
 from txfirefly.exts.fftask import Task, PARALLEL_STYLE, SchedulTask, TaskManager, runSchedul
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 SCHEDUL_TIME = 5

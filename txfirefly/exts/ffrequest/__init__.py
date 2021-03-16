@@ -48,7 +48,7 @@ from twisted.internet.defer import succeed
 from twisted.web.iweb import IBodyProducer
 from twisted.internet.ssl import ClientContextFactory
 
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 class JsonEncoder(json.JSONEncoder):
@@ -122,7 +122,7 @@ class FFrequest(object):
 		'''
 
         if headers is None:
-            headers = {b'Content-Type': [b'application/json']}
+            headers = {b'Content-Type': [b'application/x-www-form-urlencoded']}
 
         assert url != None,"url 不能为空"
 
@@ -165,7 +165,7 @@ class FFrequest(object):
         # logger.debug(f'Response code : {response.code}')
         # logger.debug(f'Response phrase : {response.phrase}')
         # logger.debug(f'Response headers : {response.headers}')
-        # logger.msg(pformat(list(response.headers.getAllRawHeaders())))
+        # logger.info(pformat(list(response.headers.getAllRawHeaders())))
         # d = readBody(response)
         # d.addCallback(cls._getBody)
         # return d
@@ -296,7 +296,7 @@ class FFrequest(object):
 #         # print('Response code:', response.code)
 #         # print('Response phrase:', response.phrase)
 #         # print('Response headers:')
-#         # logger.msg(pformat(list(response.headers.getAllRawHeaders())))
+#         # logger.info(pformat(list(response.headers.getAllRawHeaders())))
 #         # d = readBody(response)
 #         # d.addCallback(cls._getBody)
 #         # return d

@@ -28,7 +28,7 @@
 import sys
 
 from txfirefly.exts.ffmqtt.server import MQTTFactory
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 PORT = 5982
 

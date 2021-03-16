@@ -68,14 +68,14 @@ def doChildConnect(name, transport):
 				                                    GlobalObject().remote_map[remote_key].get("APP", []))
 				break
 			else:
-				logger.err(f"节点：{name} 连接:{remote_root_name} 失败。原因 ：节点 {remote_root_name} 暂未在线，连接失败")
+				logger.error(f"节点：{name} 连接:{remote_root_name} 失败。原因 ：节点 {remote_root_name} 暂未在线，连接失败")
 				
 		# if root in GlobalObject().remote_map.keys():
 		# 	logger.debug(f"节点检查一：{name} 节点连接 remote节点 : {root}")
 		# 	GlobalObject().root.callChildById(id, "remoteConnect", name, GlobalObject().remote_map.get(root),
 		# 	                                    GlobalObject().remote_map[name].get("APP", []))
 		# else:
-		# 	logger.err(f"节点：{name} 连接:{root} 失败。原因 ：节点 {root} 暂未在线，连接失败")
+		# 	logger.error(f"节点：{name} 连接:{root} 失败。原因 ：节点 {root} 暂未在线，连接失败")
 	
 	# 通知有需要连的node节点连接到此root节点
 	for remote_item in GlobalObject().remote_map.values():
@@ -99,7 +99,7 @@ def doChildLostConnect(childId):
 				del GlobalObject().remote_map[remote_key]
 				break
 	except Exception as e:
-		logger.err(str(e))
+		logger.error(str(e))
 		
 class MasterNode(RPCServer):
 	'''

@@ -33,7 +33,7 @@ from abc import abstractmethod
 from twisted.internet import defer, threads, reactor
 from typing import List
 
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 SINGLE_STYLE = 1
 PARALLEL_STYLE = 2
@@ -67,7 +67,7 @@ class TaskManager():
 				exist_target = self._targets.get(key)
 				raise "target [%d] Already exists,\
 	            Conflict between the %s and %s" % (key, exist_target.__class__.__name__, target.__class__.__name__)
-			logger.msg("当前服务器 task {} 注册成功".format(key))
+			logger.info("当前服务器 task {} 注册成功".format(key))
 			self._targets[key] = target
 		finally:
 			self._lock.release()
@@ -115,7 +115,7 @@ class TaskManager():
 			self._lock.acquire()
 			try:
 				if not target:
-					logger.err('the task ' + str(targetKey) + ' not Found on tasks in ' + self._name)
+					logger.error('the task ' + str(targetKey) + ' not Found on tasks in ' + self._name)
 					return None
 				if targetKey not in self.unDisplay:
 					logger.debug("call method %s on tasks [single]" % target.__class__.__name__)
@@ -133,7 +133,7 @@ class TaskManager():
 			self._lock.acquire()
 			try:
 				if not target:
-					logger.err('the task ' + str(targetKey) + ' not Found on tasks in ' + self._name)
+					logger.error('the task ' + str(targetKey) + ' not Found on tasks in ' + self._name)
 					return None
 				logger.debug("call method %s on tasks [parallel]" % target.__class__.__name__)
 				result = threads.deferToThread(target.run, *args, **kwargs)
@@ -193,7 +193,7 @@ class LoopTask(Task):
 		self._task_in_reactor = None
 	
 	def run(self, *args, **kwargs):
-		logger.msg("loop task {} will be called {}s later".format(self.__class__.__name__, self.op_int))
+		logger.info("loop task {} will be called {}s later".format(self.__class__.__name__, self.op_int))
 		if self._task_in_reactor:
 			self._run(*args, **kwargs)
 		if self.op_int != 0:

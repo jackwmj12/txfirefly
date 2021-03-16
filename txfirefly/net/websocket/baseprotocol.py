@@ -25,15 +25,16 @@
 #
 #
 #
+from typing import Union
 
 from autobahn.twisted import WebSocketServerProtocol, WebSocketServerFactory
 from twisted.protocols import policies
 from txzmq import ZmqRequestTimeoutError
 
 from txfirefly.net.common.manager import ConnectionManager
-from txfirefly.net.websocket.datapack import DataPackProtoc
+from txfirefly.net.common.datapack import DataPackProtocol
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 def onTimeout(fail):
@@ -44,14 +45,13 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
     '''
         Websocket服务
     '''
-    _recv_buffer = b""
+    _recv_buffer = bytearray()
     datahandler = None
 
     def onConnect(self, request):
-        logger.msg("Client connecting: {}".format(request.peer))
+        logger.info("Client connecting: {}".format(request.peer))
         self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 30))
-        self.factory.connmanager.addConnection(self)
-        self.factory.doConnectionMade(self)
+        self.factory.doConnectionMade(self,self.transport.sessionno)
         self.datahandler = self.dataHandleCoroutine()
         self.datahandler.__next__()
 
@@ -63,13 +63,12 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
         :param reason:
         :return:
         '''
-        logger.msg('Client %d login out: %s' % (self.transport.sessionno, reason))
-        self.factory.doConnectionLost(self)
-        self.factory.connmanager.dropConnectionByID(self.transport.sessionno)
+        logger.info('Client %d login out: %s' % (self.transport.sessionno, reason))
         self.setTimeout(None)
+        self.factory.doConnectionLost(self)
 
     def onOpen(self):
-        logger.msg("WebSocket connection open.")
+        logger.info("WebSocket connection open.")
 
     def dataHandleCoroutine(self):
         """
@@ -115,17 +114,16 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
 
     def safeToWriteJson(self,json_):
         from twisted.internet import reactor
-        
         if not self.transport.connected or not json_:
             return
         reactor.callFromThread(self.sendMessage, json_, isBinary=False)
+        
 
 class WebSocketFactory(WebSocketServerFactory):
     protocol = WebSocket
 
-    def __init__(self, dataprotocl = DataPackProtoc()):
+    def __init__(self, dataprotocl : Union[DataPackProtocol,None] ):
         super(WebSocketFactory,self).__init__()
-        self.service = None
         self.connmanager = ConnectionManager()
         self.dataprotocl = dataprotocl
 
@@ -134,33 +132,26 @@ class WebSocketFactory(WebSocketServerFactory):
         '''
         self.dataprotocl = dataprotocl
 
-    def doConnectionMade(self, conn):
+    def doConnectionMade(self,conn ,conn_id):
         '''当连接建立时的处理'''
-        pass
+        self.connmanager.addConnection(conn,conn_id)
 
-    def doConnectionLost(self, conn):
+    def doConnectionLost(self,conn ,conn_id):
         '''连接断开时的处理'''
-        pass
-
-    def addServiceChannel(self, service):
-        '''添加服务通道'''
-        self.service = service
+        self.connmanager.dropConnectionByID(conn,conn_id)
+        logger.info("Clients residue : {}".format(self.connmanager.getNowConnCnt()))
 
     def doDataReceived(self, conn, commandID, data):
         '''数据到达时的处理'''
         # defer_tool = self.service.callTarget(commandID, conn, data)
         # return defer_tool
 
-    def produceResult(self, command, response):
-        '''产生客户端需要的最终结果
+    def produceResult(self, command):
+        '''
+        产生客户端需要的最终结果
         @param response: str 分布式客户端获取的结果
         '''
-        return self.dataprotocl.pack(command, response)
-
-    def loseConnection(self, connID):
-        """主动端口与客户端的连接
-        """
-        self.connmanager.loseConnection(connID)
+        return self.dataprotocl.pack(command)
 
     def pushObject(self, msg, sendList):
         '''服务端向客户端推消息
@@ -168,4 +159,3 @@ class WebSocketFactory(WebSocketServerFactory):
         @param sendList: 推向的目标列表(客户端id 列表)
         '''
         self.connmanager.pushObject(msg, sendList)
-        # Log.debug("WebSocket向外推送数据:{}".format(msg))

@@ -28,12 +28,12 @@
 
 from txrpc.globalobject import remoteserviceHandle
 from txrpc.client import RPCClient
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 def fun():
 	d = RPCClient.callRemote("SERVER", "server_test")
 	d.addCallback(logger.debug)
-	d.addErrback(logger.err)
+	d.addErrback(logger.error)
 	return d
 
 @remoteserviceHandle("SERVER")

@@ -35,7 +35,7 @@ import base64
 from twisted.protocols import policies
 
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 LOGFILE = 'logfile.log'
 logging.basicConfig(filename=LOGFILE, format='%(asctime)s %(levelname)s %(message)s', level=logging.DEBUG)
@@ -305,10 +305,10 @@ class MQTTProtocol(Protocol, policies.TimeoutMixin):
 	
 	def connectionMade(self):
 		self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", TIME_OUT))
-		logger.msg('客户端:{} {} 连入...'.format(self.transport.client[0], self.transport.client[1]))
+		logger.info('客户端:{} {} 连入...'.format(self.transport.client[0], self.transport.client[1]))
 	
 	def connectionLost(self, reason):
-		logger.msg('客户端:{} {} 登出...'.format(self.transport.client[0], self.transport.client[1]))
+		logger.info('客户端:{} {} 登出...'.format(self.transport.client[0], self.transport.client[1]))
 		self.setTimeout(None)
 	
 	def connectReceived(self, clientID, keepalive, willTopic, willMessage, willQoS, willRetain, cleanStart):

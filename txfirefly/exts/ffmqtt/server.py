@@ -28,7 +28,7 @@
 from twisted.internet.protocol import Factory
 from txfirefly.exts.ffmqtt.mqtt import MQTTProtocol
 from txfirefly.net.common.manager import ConnectionManager
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 CONNACK_ACCEPTED = 0x00
 GRANTED_QOS = 1
@@ -65,13 +65,13 @@ class MQTTHandler(MQTTProtocol):
 	
 	def disconnectReceived(self):
 		logger.debug('Disconnect received from %s' % (self.clientID))
-		logger.msg('Removed %s from online_users' % (self.clientID))
+		logger.info('Removed %s from online_users' % (self.clientID))
 		self.factory.onDisconnect(self)
 	
 	def connectionLost(self, reason):
 		super().connectionLost(reason)
 		self.factory.doConnectionLost(self)
-		logger.msg("Clients residue: {}".format(self.factory.connmanager.getNowConnCnt()))
+		logger.info("Clients residue: {}".format(self.factory.connmanager.getNowConnCnt()))
 	
 	def subscribeReceived(self, topics, messageId):
 		newtopics = [i[0] for i in topics[::2]]

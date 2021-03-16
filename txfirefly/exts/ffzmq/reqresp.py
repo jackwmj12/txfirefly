@@ -30,7 +30,7 @@ from txzmq import ZmqPubConnection, ZmqFactory, ZmqEndpoint, ZmqSubConnection, Z
 	ZmqRequestTimeoutError, \
 	ZmqREPConnection, ZmqPushConnection, ZmqPullConnection
 
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 def onTimeout(fail):
@@ -63,7 +63,7 @@ class reqModel():
 			d = self._req.sendMsg(data, timeout=self.timeout)
 			return d
 		else:
-			logger.err("请创建请求者实例")
+			logger.error("请创建请求者实例")
 		return None
 
 
@@ -102,4 +102,4 @@ class repModel():
 		'''
 		# defer_tool = self.service.callTarget(*args)
 		# return defer_tool
-		logger.msg(args)
+		logger.info(args)

@@ -51,8 +51,3 @@ class Connection:
         """发送消息
         """
         self.instance.safeToWriteData(msg)
-
-    def safeToWriteOriginalData(self,msg):
-        """发送消息
-        """
-        self.instance.safeToWriteOriginalData(msg)

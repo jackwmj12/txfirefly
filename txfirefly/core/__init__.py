@@ -28,7 +28,7 @@
 
 from txrpc.distributed.node import RemoteObject
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 GlobalObject().masterremote = None # master的远端节点（所有节点除了master自身都需要连接该节点）
 GlobalObject().remote_map = {}  # master 下保存的连接信息放于此处
@@ -54,7 +54,7 @@ def master_conncet(name : str,master : dict = None):
     # node连接 master 节点，若连接不成功，则会退出服务
     GlobalObject().masterremote.connect((master.get('HOST'), int(master.get('PORT'))))
 
-    logger.debug("Connect master node success...")
+    logger.debug("connect master node success...")
 
     logger.debug("providing methods to the master node")
 

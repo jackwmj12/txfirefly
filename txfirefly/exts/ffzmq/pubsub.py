@@ -28,7 +28,7 @@
 
 from txzmq import ZmqPubConnection, ZmqFactory, ZmqEndpoint, ZmqSubConnection, ZmqRequestTimeoutError
 
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 def onTimeout(fail):
@@ -69,7 +69,7 @@ class subModel():
                 else:
                     self.setCallback(self.doDataReceived)
         except Exception as e:
-            logger.err(e)
+            logger.error(e)
 
     def setFilter(self,filter_=None):
         if self._sub:
@@ -79,13 +79,13 @@ class subModel():
             else:
                 self._sub.subscribe(b'')
         else:
-            logger.err("设置过滤器之前请初始化SUB端口")
+            logger.error("设置过滤器之前请初始化SUB端口")
 
     def setCallback(self,callBack):
         if self._sub:
             self._sub.gotMessage = callBack
         else:
-            logger.err("绑定回调前请初始化SUB端口")
+            logger.error("绑定回调前请初始化SUB端口")
 
     def doDataReceived(self,*args):
         '''

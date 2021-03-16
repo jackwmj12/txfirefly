@@ -29,8 +29,8 @@ from typing import List
 
 from txrpc.distributed.node import RemoteObject
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger, delay_import
-
+from txrpc.utils import delay_import
+from txrpc.utils.log import logger
 
 def masterserviceHandle(target):
     """

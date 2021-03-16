@@ -29,7 +29,7 @@ from __future__ import print_function
 
 import txredisapi as redis
 
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 class subscriberProtocol(redis.SubscriberProtocol):
@@ -50,10 +50,10 @@ class subscriberProtocol(redis.SubscriberProtocol):
 		pass
 	
 	def messageReceived(self, pattern, channel, message):
-		logger.msg("pattern=%s, channel=%s message=%s" % (pattern, channel, message))
+		logger.info("pattern=%s, channel=%s message=%s" % (pattern, channel, message))
 	
 	def connectionLost(self, reason):
-		logger.msg("lost connection:{}".format(reason))
+		logger.info("lost connection:{}".format(reason))
 
 
 class subscriberFactory(redis.SubscriberFactory):
