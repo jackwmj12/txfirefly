@@ -101,9 +101,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         线程安全的向客户端发送数据
         @param data: str 要向客户端写的数据
         '''
-
         from twisted.internet import reactor
-        
         if not self.transport.connected or not messages:
             return
         if isinstance(messages,list):

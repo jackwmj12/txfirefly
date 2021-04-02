@@ -101,7 +101,7 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
         # ## echo back message verbatim
         # self.sendMessage(payload, isBinary)
 
-    def safeToWriteData(self, data, command):
+    def safeToWriteData(self, data, messages):
         '''线程安全的向客户端发送数据
         @param data: str 要向客户端写的数据
         '''
@@ -109,14 +109,21 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
         
         if not self.transport.connected or data is None:
             return
-        senddata = self.factory.produceResult(data, command)
-        reactor.callFromThread(self.sendMessage, senddata, isBinary=True)
+        if isinstance(messages,list):
+            for message in messages:
+                reactor.callFromThread(self.sendMessage, message, isBinary=True)
+        else:
+            reactor.callFromThread(self.sendMessage, messages, isBinary=True)
 
-    def safeToWriteJson(self,json_):
+    def safeToWriteJson(self,json_messages):
         from twisted.internet import reactor
-        if not self.transport.connected or not json_:
+        if not self.transport.connected or not json_messages:
             return
-        reactor.callFromThread(self.sendMessage, json_, isBinary=False)
+        if isinstance(json_messages,list):
+            for json_message in json_messages:
+                reactor.callFromThread(self.sendMessage, json_message, isBinary=False)
+        else:
+            reactor.callFromThread(self.sendMessage, json_messages, isBinary=False)
         
 
 class WebSocketFactory(WebSocketServerFactory):

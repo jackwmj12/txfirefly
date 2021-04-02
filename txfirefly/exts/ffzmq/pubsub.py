@@ -25,6 +25,7 @@
 #
 #
 #
+from typing import List
 
 from txzmq import ZmqPubConnection, ZmqFactory, ZmqEndpoint, ZmqSubConnection, ZmqRequestTimeoutError
 
@@ -35,7 +36,7 @@ def onTimeout(fail):
     fail.trap(ZmqRequestTimeoutError)
     print("Timeout on request, is reply server running?")
 
-class pubModel():
+class PubModel():
     '''
     zmq 发布者模型
     '''
@@ -53,8 +54,17 @@ class pubModel():
         :return:
         '''
         self._pub.publish(data,tag)
+    
+    def publish(self,tag,data):
+        '''
+        从push服务器向外推送数据
+        :param tag:
+        :param data:
+        :return:
+        '''
+        self._pub.publish(data,tag)
 
-class subModel():
+class SubModel():
     '''
     zmq 订阅者模型
     '''
@@ -70,22 +80,32 @@ class subModel():
                     self.setCallback(self.doDataReceived)
         except Exception as e:
             logger.error(e)
-
-    def setFilter(self,filter_=None):
+    
+    def subscribe(self,topics=None):
         if self._sub:
-            if filter_:
-                for item in filter_:
-                    self._sub.subscribe(item.encode())
+            if isinstance(topics,List):
+                for topic in topics:
+                    self._subscribe(topic)
             else:
-                self._sub.subscribe(b'')
+                self._subscribe(topics)
         else:
-            logger.error("设置过滤器之前请初始化SUB端口")
-
+            logger.error("设置过滤器之前请初始化 SUB 端口")
+    
+    def _subscribe(self,topic=None):
+        if topic:
+            if isinstance(topic, bytes):
+                self._sub.subscribe(topic)
+            elif isinstance(topic, str):
+                self._sub.subscribe(topic.encode())
+    
+    def subscribeAll(self):
+        self._sub.subscribe(b'')
+    
     def setCallback(self,callBack):
         if self._sub:
             self._sub.gotMessage = callBack
         else:
-            logger.error("绑定回调前请初始化SUB端口")
+            logger.error("绑定回调前请初始化 SUB 端口")
 
     def doDataReceived(self,*args):
         '''
@@ -93,6 +113,8 @@ class subModel():
         :param data:
         :return:
         '''
-        # defer_tool = self.service.callTarget(*args)
-        # return defer_tool
-        # Log.msg(args)
+        logger.debug(f"rcev zmq msg : {args}")
+        
+        
+    def shutdown(self):
+        self._sub.shutdown()

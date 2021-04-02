@@ -49,7 +49,7 @@ def master_conncet(name : str,master : dict = None):
     # # GlobalObject().masterremote = RemoteMasterObject(service_config.get("NAME"))
     GlobalObject().masterremote = RemoteObject(name)
     
-    logger.debug("Connecting into master node...")
+    logger.debug("connecting into master node...")
 
     # node连接 master 节点，若连接不成功，则会退出服务
     GlobalObject().masterremote.connect((master.get('HOST'), int(master.get('PORT'))))
