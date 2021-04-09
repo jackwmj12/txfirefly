@@ -1,9 +1,9 @@
 # !/usr/bin/env Python3
 # -*- coding: utf-8 -*-
 # @Author   : joe lin
-# @FILE     : server.py
-# @Time     : 2021-02-20 0:21
-# @Software : od_gateway
+# @FILE     : pub.py
+# @Time     : 2021-03-16 18:09
+# @Software : tiseal_app
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 
@@ -25,32 +25,3 @@
 #
 #
 #
-import sys
-
-from txfirefly.exts.ffmqtt.server import MQTTFactory
-
-PORT = 5982
-
-def loopSendMessage(factory):
-	''':param'''
-	from twisted.internet import reactor
-	factory.publish(topic=b"test", message=b"hello world")
-	reactor.callLater(300, loopSendMessage, factory)
-
-if __name__ == '__main__':
-	from twisted.internet import reactor
-	from txrpc.utils import log
-	
-	f = sys.stdout
-	
-	log.init()
-	
-	factory = MQTTFactory()
-	
-	reactor.listenTCP(PORT, factory)
-	
-	reactor.callLater(5, loopSendMessage, factory)
-	
-	print('Started server at: *:%s' % PORT)
-	
-	reactor.run()

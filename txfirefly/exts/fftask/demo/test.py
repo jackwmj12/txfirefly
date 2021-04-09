@@ -30,7 +30,7 @@
 import time
 
 from txfirefly.exts.fftask import Task, PARALLEL_STYLE, SchedulTask, TaskManager, runSchedul
-from txrpc.utils.log import logger
+from txrpc.utils import log
 
 
 SCHEDUL_TIME = 5
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 	reactor.callLater(5, task.cancel)
 	
 	task_manager = TaskManager("task1")
-	logger.init()
+	log.init()
 	
 	task_manager.mapTarget(test1())
 	task_manager.mapTarget(test2())
