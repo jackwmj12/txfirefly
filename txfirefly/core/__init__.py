@@ -28,7 +28,7 @@
 
 from txrpc.distributed.node import RemoteObject
 from txrpc.globalobject import GlobalObject
-from txrpc.utils.log import logger
+from loguru import logger
 
 GlobalObject().masterremote = None # master的远端节点（所有节点除了master自身都需要连接该节点）
 GlobalObject().remote_map = {}  # master 下保存的连接信息放于此处

@@ -35,7 +35,7 @@ from twisted.internet import protocol
 from txfirefly.net.common.manager import ConnectionManager
 from txfirefly.net.common.datapack import DataPackProtocol
 from txrpc.globalobject import GlobalObject
-from txrpc.utils.log import logger
+from loguru import logger
 
 class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
     '''

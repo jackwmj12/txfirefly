@@ -26,7 +26,7 @@
 #
 #
 from txfirefly.net.common.connection import Connection
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 class ConnectionManager:

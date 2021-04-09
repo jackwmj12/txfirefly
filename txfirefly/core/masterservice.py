@@ -30,7 +30,7 @@ from typing import List
 from txrpc.distributed.node import RemoteObject
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import delay_import
-from txrpc.utils.log import logger
+from loguru import logger
 
 def masterserviceHandle(target):
     """

@@ -25,9 +25,9 @@
 #
 #
 #
-from txfirefly.utils.rpcrestful import RpcRestful
-from txrpc.utils.log import logger
+from loguru import logger
 
+from txfirefly.utils.rpcrestful import RpcRestful
 
 def DefferedErrorHandle(err,tag = None):
     '''延迟对象的错误处理'''

@@ -29,7 +29,7 @@ from __future__ import print_function
 
 import txredisapi
 
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 class monitorProtocol(txredisapi.MonitorProtocol):

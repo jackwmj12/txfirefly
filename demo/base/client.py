@@ -43,8 +43,10 @@ from txrpc.globalobject import GlobalObject
 from txrpc.utils import asDeferred
 
 from txrpc.utils import log
+from loguru import logger
 
-logger = log.init()
+log.init()
+
 with open("config.json","r") as f:
 	GlobalObject().config = json.load(f)
 

@@ -28,7 +28,7 @@
 from twisted.internet.protocol import Factory
 from txfirefly.exts.ffmqtt.mqtt import MQTTProtocol
 from txfirefly.net.common.manager import ConnectionManager
-from txrpc.utils.log import logger
+from loguru import logger
 
 CONNACK_ACCEPTED = 0x00
 GRANTED_QOS = 1

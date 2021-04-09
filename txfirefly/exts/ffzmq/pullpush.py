@@ -26,8 +26,7 @@
 #
 #
 from txzmq import ZmqPubConnection, ZmqFactory, ZmqEndpoint, ZmqSubConnection, ZmqPullConnection, ZmqPushConnection
-
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 class pushMode():

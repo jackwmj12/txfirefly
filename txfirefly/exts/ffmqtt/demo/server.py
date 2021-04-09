@@ -40,6 +40,7 @@ def loopSendMessage(factory):
 if __name__ == '__main__':
 	from twisted.internet import reactor
 	from txrpc.utils import log
+	from loguru import logger
 	
 	f = sys.stdout
 	
@@ -51,6 +52,6 @@ if __name__ == '__main__':
 	
 	reactor.callLater(5, loopSendMessage, factory)
 	
-	print('Started server at: *:%s' % PORT)
+	logger.debug('Started server at: *:%s' % PORT)
 	
 	reactor.run()

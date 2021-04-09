@@ -35,7 +35,7 @@ import base64
 from twisted.protocols import policies
 
 from txrpc.globalobject import GlobalObject
-from txrpc.utils.log import logger
+from loguru import logger
 
 LOGFILE = 'logfile.log'
 logging.basicConfig(filename=LOGFILE, format='%(asctime)s %(levelname)s %(message)s', level=logging.DEBUG)

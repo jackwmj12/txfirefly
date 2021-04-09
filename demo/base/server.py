@@ -44,13 +44,14 @@ from txrpc.distributed.manager import RemoteUnFindedError
 from txrpc.globalobject import GlobalObject
 from txrpc.server import RPCServer
 from txrpc.utils import log
+from loguru import logger
 
 NODE_NAME = "SERVER"
 
 with open("config.json","r") as f:
     GlobalObject().config = json.load(f)
 
-logger = log.init()
+log.init()
 
 def fun():
     from twisted.internet import reactor
@@ -59,7 +60,7 @@ def fun():
     if not d:
         reactor.stop()
     else:
-        d.addCallback(log.debug)
+        d.addCallback(logger.debug)
         d.addErrback(lambda ign : reactor.stop())
     return d
 
@@ -86,11 +87,10 @@ def doChildConnect(name, transport):
 
 @server.childConnectHandle
 async def fun2(name, transport):
-    log.debug(64 * "*")
     async with aiohttp.ClientSession() as session:
         url = 'http://httpbin.org'
         async with session.get(url) as response:
-            log.debug(response.status)
+            logger.debug(response.status)
             # logger.debug(await response.text())
 
 @server.startServiceHandle
@@ -98,7 +98,7 @@ async def fun2(name, transport):
 def fun3():
     resp = yield treq.get("http://httpbin.org")
     ret = yield treq.content(resp)
-    log.debug(ret)
+    logger.debug(ret)
     return ret
 
 @server.childLostConnectHandle
@@ -106,6 +106,6 @@ def doChildLostConnect(childId):
     '''
     :return
     '''
-    log.debug("{} lost connect".format(childId))
+    logger.debug("{} lost connect".format(childId))
 
 server.run()

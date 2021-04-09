@@ -29,7 +29,7 @@ import zmq
 from txzmq import ZmqRequestTimeoutError, ZmqPubConnection, ZmqFactory, ZmqEndpoint, ZmqSubConnection, ZmqREQConnection, \
 	ZmqREPConnection, ZmqPushConnection, ZmqPullConnection
 
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 def onPrint(reply):

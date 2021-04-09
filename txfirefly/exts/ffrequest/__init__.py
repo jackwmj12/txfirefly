@@ -47,8 +47,7 @@ from zope.interface import implementer
 from twisted.internet.defer import succeed
 from twisted.web.iweb import IBodyProducer
 from twisted.internet.ssl import ClientContextFactory
-
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 class JsonEncoder(json.JSONEncoder):

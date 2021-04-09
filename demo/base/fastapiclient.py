@@ -30,6 +30,7 @@ import json
 import aiohttp
 import treq
 from fastapi import FastAPI
+from loguru import logger
 
 client = None
 
@@ -67,18 +68,15 @@ def register_rpc(app: FastAPI) -> None:
 		from txfirefly.client import ClientNode
 		from txfirefly.exts.ffrequest import FFrequest
 		from txrpc.globalobject import GlobalObject
-		from txrpc.utils import asDeferred
-		
 		from twisted.internet import defer
 		
 		from txrpc.utils import log
 		
-		logger = log.init()
+		log.init()
 		
 		with open("config.json", "r") as f:
 			GlobalObject().config = json.load(f)
 
-		
 		app.state.client = ClientNode("CLIENT")
 		
 		@app.state.client.startServiceHandle

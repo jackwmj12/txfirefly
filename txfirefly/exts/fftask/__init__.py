@@ -33,7 +33,7 @@ from abc import abstractmethod
 from twisted.internet import defer, threads, reactor
 from typing import List
 
-from txrpc.utils.log import logger
+from loguru import logger
 
 SINGLE_STYLE = 1
 PARALLEL_STYLE = 2

@@ -30,7 +30,7 @@ from txzmq import ZmqPubConnection, ZmqFactory, ZmqEndpoint, ZmqSubConnection, Z
 	ZmqRequestTimeoutError, \
 	ZmqREPConnection, ZmqPushConnection, ZmqPullConnection
 
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 def onTimeout(fail):
@@ -42,7 +42,6 @@ class reqModel():
 	'''
 
 	'''
-	
 	def __init__(self, endpoint):
 		if endpoint:
 			logger.debug("开始运行 REQ 服务器,连接地址为:{}...".format(endpoint))
