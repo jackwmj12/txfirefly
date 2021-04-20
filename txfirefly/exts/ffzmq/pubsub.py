@@ -72,7 +72,7 @@ class SubModel():
     def __init__(self,endpoint,callBack = None):
         try:
             if endpoint:
-                logger.debug("开始运行 SUB 服务器,连接地址为:{}...".format(endpoint))
+                logger.debug("开始运行 SUB 客户端 , 连接的服务器地址为:{}...".format(endpoint))
                 self._sub = ZmqSubConnection(ZmqFactory(), ZmqEndpoint("connect", endpoint))
                 if callBack:
                     self.setCallback(callBack)

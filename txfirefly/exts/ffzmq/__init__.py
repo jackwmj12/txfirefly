@@ -61,7 +61,7 @@ class ZMQfactory():
 	
 	def add_sub(self, endpoint):
 		if endpoint:
-			logger.debug("开始运行 SUB 服务器,连接地址为:{}...".format(endpoint))
+			logger.debug("开始运行 SUB 客户端 , 连接的服务器地址为:{}...".format(endpoint))
 			self.sub_ = ZmqSubConnection(ZmqFactory(), ZmqEndpoint("connect", endpoint))
 			self.set_callback()
 	

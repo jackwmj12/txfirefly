@@ -94,9 +94,9 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
         self.datahandler.send(payload)
 
         # if isBinary:
-        #     Log.msg("Binary message received: {} bytes".format(len(payload)))
+        #     logger.msg("Binary message received: {} bytes".format(len(payload)))
         # else:
-        #     Log.msg("Text message received: {}".format(payload.decode('utf8')))
+        #     logger.msg("Text message received: {}".format(payload.decode('utf8')))
         #
         # ## echo back message verbatim
         # self.sendMessage(payload, isBinary)
@@ -116,15 +116,17 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
             reactor.callFromThread(self.sendMessage, messages, isBinary=True)
 
     def safeToWriteJson(self,json_messages):
+        
         from twisted.internet import reactor
         if not self.transport.connected or not json_messages:
             return
         if isinstance(json_messages,list):
             for json_message in json_messages:
+                # logger.debug(f"待发送的json数据为:{json_messages}")
                 reactor.callFromThread(self.sendMessage, json_message, isBinary=False)
         else:
+            # logger.debug(f"待发送的json数据为:{json_messages}")
             reactor.callFromThread(self.sendMessage, json_messages, isBinary=False)
-        
 
 class WebSocketFactory(WebSocketServerFactory):
     protocol = WebSocket
