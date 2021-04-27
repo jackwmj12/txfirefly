@@ -42,10 +42,7 @@ from txfirefly.exts.ffrequest import FFrequest
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import asDeferred
 
-from txrpc.utils import log
 from loguru import logger
-
-log.init()
 
 with open("config.json","r") as f:
 	GlobalObject().config = json.load(f)

@@ -70,10 +70,6 @@ def register_rpc(app: FastAPI) -> None:
 		from txrpc.globalobject import GlobalObject
 		from twisted.internet import defer
 		
-		from txrpc.utils import log
-		
-		log.init()
-		
 		with open("config.json", "r") as f:
 			GlobalObject().config = json.load(f)
 
@@ -91,7 +87,6 @@ def register_rpc(app: FastAPI) -> None:
 			logger.debug(ret)
 			defer.returnValue(ret)
 			
-		
 		@app.state.client.startServiceHandle
 		async def start3():
 			pass

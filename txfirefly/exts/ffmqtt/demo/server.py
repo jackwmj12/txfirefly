@@ -39,12 +39,7 @@ def loopSendMessage(factory):
 
 if __name__ == '__main__':
 	from twisted.internet import reactor
-	from txrpc.utils import log
 	from loguru import logger
-	
-	f = sys.stdout
-	
-	log.init()
 	
 	factory = MQTTFactory()
 	

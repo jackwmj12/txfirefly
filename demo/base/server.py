@@ -43,15 +43,12 @@ from txfirefly.server import ServerNode
 from txrpc.distributed.manager import RemoteUnFindedError
 from txrpc.globalobject import GlobalObject
 from txrpc.server import RPCServer
-from txrpc.utils import log
 from loguru import logger
 
 NODE_NAME = "SERVER"
 
 with open("config.json","r") as f:
     GlobalObject().config = json.load(f)
-
-log.init()
 
 def fun():
     from twisted.internet import reactor
@@ -73,7 +70,7 @@ def doChildConnect(name, transport):
     '''
     from twisted.internet import reactor
     
-    log.debug("{} connected".format(name))
+    logger.debug("{} connected".format(name))
     
     # d = RPCServer.callRemote("CLIENT", "client_test")
     # if not d:
