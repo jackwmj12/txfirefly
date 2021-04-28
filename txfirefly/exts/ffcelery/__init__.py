@@ -26,7 +26,8 @@
 #
 #
 from celery import Celery
-from utils import logger
+from loguru import logger
+
 
 def create_celery(config):
 	logger.debug("create celery program:{name} ".format(name = config["CELERY_NAME"]))

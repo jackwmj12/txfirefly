@@ -30,7 +30,6 @@
 #
 # from txfirefly.exts.ffcelery import create_celery
 #
-# celery_app = create_celery(config["testing"])
 #
 # # demo
 #
