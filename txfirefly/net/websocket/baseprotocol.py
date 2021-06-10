@@ -102,7 +102,8 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
         # self.sendMessage(payload, isBinary)
 
     def safeToWriteData(self, data, messages):
-        '''线程安全的向客户端发送数据
+        '''
+        线程安全的向客户端发送数据
         @param data: str 要向客户端写的数据
         '''
         from twisted.internet import reactor
@@ -142,16 +143,22 @@ class WebSocketFactory(WebSocketServerFactory):
         self.dataprotocl = dataprotocl
 
     def doConnectionMade(self,conn ,conn_id):
-        '''当连接建立时的处理'''
+        '''
+        当连接建立时的处理
+        '''
         self.connmanager.addConnection(conn,conn_id)
 
     def doConnectionLost(self,conn ,conn_id):
-        '''连接断开时的处理'''
-        self.connmanager.dropConnectionByID(conn,conn_id)
+        '''
+        连接断开时的处理
+        '''
+        self.connmanager.dropConnectionByID(conn_id)
         logger.info("Clients residue : {}".format(self.connmanager.getNowConnCnt()))
 
     def doDataReceived(self, conn, commandID, data):
-        '''数据到达时的处理'''
+        '''
+        数据到达时的处理
+        '''
         # defer_tool = self.service.callTarget(commandID, conn, data)
         # return defer_tool
 
@@ -163,7 +170,8 @@ class WebSocketFactory(WebSocketServerFactory):
         return self.dataprotocl.pack(command)
 
     def pushObject(self, msg, sendList):
-        '''服务端向客户端推消息
+        '''
+        服务端向客户端推消息
         @param msg: 消息的类容，protobuf结构类型
         @param sendList: 推向的目标列表(客户端id 列表)
         '''

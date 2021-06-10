@@ -56,8 +56,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         推荐重写，可以加入连接对象添加，连接数量统计
         :return:
         '''
-        logger.info('Client %d login in.[%s,%d]' % (self.transport.sessionno, \
-                                                    self.transport.client[0], self.transport.client[1]))
+        logger.info('Client %d login in.[%s,%d]' % (self.transport.sessionno, self.transport.client[0], self.transport.client[1]))
         self.conn_id = self.transport.sessionno  # 连接ID
         self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 30))
         logger.info('客户端:{} {} 连入...'.format(self.transport.client[0], self.transport.client[1]))
@@ -111,7 +110,9 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
             reactor.callFromThread(self._send_message, messages)
 
 class BaseFactory(protocol.ServerFactory):
-    '''协议工厂'''
+    '''
+    协议工厂
+    '''
 
     protocol = BaseProtocol
 
@@ -132,13 +133,20 @@ class BaseFactory(protocol.ServerFactory):
         当连接建立时的处理
         '''
         self.connmanager.addConnection(conn,conn_id)
-
+    
     def doConnectionLost(self, conn, conn_id):
         '''
         连接断开时的处理
         '''
-        self.connmanager.dropConnectionByID(conn, conn_id)
+        self.connmanager.dropConnectionByID(conn_id)
         logger.info("Clients residue : {}".format(self.connmanager.getNowConnCnt()))
+    
+    # def doConnectionLost(self, conn, conn_id):
+    #     '''
+    #     连接断开时的处理
+    #     '''
+    #     self.connmanager.dropConnectionByID(conn_id,conn)
+    #     logger.info("Clients residue : {}".format(self.connmanager.getNowConnCnt()))
 
     def doDataReceived(self, conn, commandID, data):
         '''
@@ -169,7 +177,10 @@ class BaseFactory(protocol.ServerFactory):
         return self.connmanager.pushObject(msg, sendList)
     
     def resetConnID(self,sourceId,dstId):
-        logger.debug(f"reset the conn <{sourceId,}> -> <{dstId}>")
+        '''
+        :parameter
+        '''
+        logger.debug(f"reset the conn <{sourceId}> -> <{dstId}>")
         coon = self.connmanager.getConnectionByID(sourceId)
         if coon:
             self.connmanager.addConnection(dstId,coon)

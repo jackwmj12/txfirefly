@@ -50,14 +50,17 @@ class ConnectionManager:
 		'''
 		# logger.debug(id)
 		# logger.debug(conn)
-		if id != None and conn != None:
+		if id and conn :
 			# logger.info(f"连接池 添加链接: <{id}> ")
 			if self.isInConnections(id):
-				# logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
+				logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
 				self.dropConnectionByID(id)
-				self.loseConnectionByConnID(id)
+				try:
+					self.loseConnectionByConnID(id)
+				except Exception as e:
+					logger.warning(e)
 			_conn = Connection(conn, id)
-			self._connections[_conn.id] = _conn
+			self._connections[id] = _conn
 	
 	def isInConnections(self, id):
 		if id in self._connections.keys():
@@ -68,31 +71,41 @@ class ConnectionManager:
 	@property
 	def connections(self):
 		return self._connections.values()
-	
+
 	@property
 	def connectionsID(self):
 		return self._connections.keys()
 	
-	def dropConnectionByID(self, connID, conn=None):
-		'''更加连接的id删除连接实例
+	def dropConnectionByID(self, connID):
+		'''
+		更加连接的id删除连接实例
 		@param connID: int 连接的id
 		'''
-		if conn == None:
-			try:
-				del self._connections[connID]
-			except Exception as e:
-				logger.error(e)
-		else:
-			if self.getConnectionByID(connID) == conn:
-				try:
-					del self._connections[connID]
-				except Exception as e:
-					logger.error(str(e))
-			else:
-				for connection in self.connections:
-					if conn == connection:
-						self._connections.pop(conn.conn_id)
-				# logger.error("drop failed the conn instance's id is not same as connID")
+		try:
+			del self._connections[connID]
+		except Exception as e:
+			logger.error(str(e))
+	
+	# def dropConnectionByID(self, connID, conn=None):
+	# 	'''更加连接的id删除连接实例
+	# 	@param connID: int 连接的id
+	# 	'''
+	# 	if conn == None:
+	# 		try:
+	# 			del self._connections[connID]
+	# 		except Exception as e:
+	# 			logger.error(e)
+	# 	else:
+	# 		if self.getConnectionByID(connID) == conn:
+	# 			try:
+	# 				del self._connections[connID]
+	# 			except Exception as e:
+	# 				logger.error(str(e))
+	# 		else:
+	# 			for connection in self.connections:
+	# 				if conn == connection:
+	# 					self._connections.pop(conn.conn_id)
+	# 			# logger.error("drop failed the conn instance's id is not same as connID")
 	
 	def getConnectionByID(self, connID):
 		"""根据ID获取一条连接
