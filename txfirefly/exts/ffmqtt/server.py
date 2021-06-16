@@ -145,7 +145,7 @@ class MQTTFactory(Factory):
 	
 	def onConnect(self, conn):
 		''':param'''
-		self.connmanager.addConnection(conn, id=conn.clientID)
+		self.connmanager.addConnection(conn, conn.clientID)
 	
 	def onDisconnect(self, conn):
 		''':param'''

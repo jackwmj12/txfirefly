@@ -25,6 +25,8 @@
 #
 #
 #
+from typing import Dict
+
 from txfirefly.net.common.connection import Connection
 from loguru import logger
 
@@ -38,7 +40,7 @@ class ConnectionManager:
 		'''初始化
 		@param _connections: dict {connID:conn Object}
 		'''
-		self._connections = {}
+		self._connections : Dict = {}
 	
 	def getNowConnCnt(self):
 		'''获取当前连接数量'''
@@ -50,10 +52,11 @@ class ConnectionManager:
 		'''
 		# logger.debug(id)
 		# logger.debug(conn)
+		logger.info(f"Connections add Connection: <{id}> : <{conn}>")
 		if id and conn :
 			# logger.info(f"连接池 添加链接: <{id}> ")
 			if self.isInConnections(id):
-				logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
+				# logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
 				self.dropConnectionByID(id)
 				try:
 					self.loseConnectionByConnID(id)
@@ -85,7 +88,8 @@ class ConnectionManager:
 			del self._connections[connID]
 		except Exception as e:
 			logger.error(str(e))
-	
+		# logger.debug(self._connections.keys())
+		
 	# def dropConnectionByID(self, connID, conn=None):
 	# 	'''更加连接的id删除连接实例
 	# 	@param connID: int 连接的id

@@ -48,7 +48,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         self.lockBuffer = DeferredLock()
         self.process_com_lock = threading.RLock()
         self.conn_info = {}  # 连接信息
-        self.conn_id = None  # 链接唯一ID
+        self.conn_id = None  # 连接唯一ID
         
     def connectionMade(self):
         '''
@@ -180,12 +180,12 @@ class BaseFactory(protocol.ServerFactory):
         '''
         :parameter
         '''
-        logger.debug(f"reset the conn <{sourceId}> -> <{dstId}>")
+        # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}>")
         coon = self.connmanager.getConnectionByID(sourceId)
         if coon:
-            self.connmanager.addConnection(dstId,coon)
+            self.connmanager.addConnection(coon,dstId)
             self.connmanager.dropConnectionByID(sourceId)
-            logger.debug(f"reset the conn <{sourceId,}> -> <{dstId}> success")
+            logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
         else:
             logger.error("the sourceId is not exist")
             

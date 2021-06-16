@@ -40,10 +40,10 @@ class RpcRestful():
 
 	'''
 
-	LOGIN = 100
+	LOGIN = 201
 	SUCCESS = 200
-	RELAY = 300
-	CLOSE = 400
+	RELAY = 202
+	CLOSE = 203
 	ERROR = 500
 
 	@classmethod
