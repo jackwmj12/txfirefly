@@ -58,10 +58,10 @@ def remoteConnect(name, remote : dict,app : List[str]):
     logger.debug(f"master 指令：当前节点 : {name} 连接节点 : {remote_name}")
     port = int(remote.get("PORT"))
     host = remote.get("HOST")
-    GlobalObject().remote[remote_name] = RemoteObject(name)
-    GlobalObject().remote[remote_name].setWeight(weight)
-    GlobalObject().remote[remote_name].connect((host, port))
-    # logger.debug(f"当前节点 : {name} 连接节点 : {remote_name} 成功 准备导入服务 : {app}")
+    GlobalObject().remote_map[remote_name] = RemoteObject(name)
+    GlobalObject().remote_map[remote_name].setWeight(weight)
+    GlobalObject().remote_map[remote_name].connect((host, port))
+    logger.debug(f"当前节点 : {name} 连接节点 : {remote_name} 成功 准备导入服务 : {app}")
     delay_import(app)
 
 @masterserviceHandle
@@ -69,12 +69,10 @@ def serverStop():
     """
     """
     logger.debug('service stop !!!')
-    if GlobalObject().stophandler:
-        GlobalObject().stophandler()
-    
+    if GlobalObject().node:
+        GlobalObject().node._doWhenStop()
     from twisted.internet import reactor
-    
-    reactor.callLater(0.5, reactor.stop)
+    reactor.callLater(1, reactor.stop)
     return True
 
 @masterserviceHandle
@@ -83,8 +81,6 @@ def serverReload():
     
     """
     logger.debug('service reload !!!')
-    
-    if GlobalObject().reloadhandler:
-        GlobalObject().reloadhandler()
-    
+    if GlobalObject().node:
+        GlobalObject().node._doWhenReload()
     return True

@@ -45,7 +45,7 @@ GRANTED_QOS = 1
 AES_KEY = str.upper('theverysecretkey')
 
 PROTOCOL_NAME = "04MQTT4"
-TIME_OUT = 600
+MQTT_TIME_OUT = 600
 
 
 class MQTTProtocol(Protocol, policies.TimeoutMixin):
@@ -78,7 +78,7 @@ class MQTTProtocol(Protocol, policies.TimeoutMixin):
 	'''
 	
 	def dataReceived(self, data):
-		self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", TIME_OUT))
+		self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", MQTT_TIME_OUT))
 		logger.debug('received from target:{target} :\n  {data}'.format(
 			target=(self.transport.client[0], self.transport.client[1]), data=data))
 		logger.debug('received from target:{target} :\n  {data}'.format(
@@ -304,7 +304,7 @@ class MQTTProtocol(Protocol, policies.TimeoutMixin):
 		self.transport.loseConnection()
 	
 	def connectionMade(self):
-		self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", TIME_OUT))
+		self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", MQTT_TIME_OUT))
 		logger.info('客户端:{} {} 连入...'.format(self.transport.client[0], self.transport.client[1]))
 	
 	def connectionLost(self, reason):

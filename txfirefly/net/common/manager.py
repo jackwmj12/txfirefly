@@ -27,6 +27,8 @@
 #
 from typing import Dict
 
+from twisted.internet import protocol
+
 from txfirefly.net.common.connection import Connection
 from loguru import logger
 
@@ -40,30 +42,26 @@ class ConnectionManager:
 		'''初始化
 		@param _connections: dict {connID:conn Object}
 		'''
-		self._connections : Dict = {}
+		self._connections : Dict[str,Connection] = {}
 	
 	def getNowConnCnt(self):
 		'''获取当前连接数量'''
 		return len(self._connections.items())
 	
-	def addConnection(self, conn=None, id=None):
+	def addConnection(self, conn : protocol.Protocol = None, id : str = None):
 		'''加入一条连接
 		@param _conn: Conn object
 		'''
 		# logger.debug(id)
 		# logger.debug(conn)
-		logger.info(f"Connections add Connection: <{id}> : <{conn}>")
+		logger.debug(f"Connections add Connection: <{id}> : <{conn}>")
 		if id and conn :
-			# logger.info(f"连接池 添加链接: <{id}> ")
 			if self.isInConnections(id):
-				# logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
-				self.dropConnectionByID(id)
-				try:
-					self.loseConnectionByConnID(id)
-				except Exception as e:
-					logger.warning(e)
-			_conn = Connection(conn, id)
-			self._connections[id] = _conn
+				logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
+				self.loseConnectionByConnID(id)
+				logger.debug(f"连接池 移除原连接: <{id}>")
+			logger.debug(f"连接池 添加新连接: <{id}> ")
+			self._connections[id] = Connection(conn, id)
 	
 	def isInConnections(self, id):
 		if id in self._connections.keys():
@@ -88,30 +86,8 @@ class ConnectionManager:
 			del self._connections[connID]
 		except Exception as e:
 			logger.error(str(e))
-		# logger.debug(self._connections.keys())
-		
-	# def dropConnectionByID(self, connID, conn=None):
-	# 	'''更加连接的id删除连接实例
-	# 	@param connID: int 连接的id
-	# 	'''
-	# 	if conn == None:
-	# 		try:
-	# 			del self._connections[connID]
-	# 		except Exception as e:
-	# 			logger.error(e)
-	# 	else:
-	# 		if self.getConnectionByID(connID) == conn:
-	# 			try:
-	# 				del self._connections[connID]
-	# 			except Exception as e:
-	# 				logger.error(str(e))
-	# 		else:
-	# 			for connection in self.connections:
-	# 				if conn == connection:
-	# 					self._connections.pop(conn.conn_id)
-	# 			# logger.error("drop failed the conn instance's id is not same as connID")
 	
-	def getConnectionByID(self, connID):
+	def getConnectionByID(self, connID) -> Connection:
 		"""根据ID获取一条连接
 		@param connID: int 连接的id
 		"""
@@ -126,6 +102,7 @@ class ConnectionManager:
 				conn.loseConnection()
 			except Exception as e:
 				logger.error(e)
+		self.dropConnectionByID(connID)
 	
 	def pushObject(self, msg, sendList):
 		"""
@@ -162,5 +139,4 @@ class ConnectionManager:
 						logger.debug("查无该用户:{}".format(sendList))
 				except Exception as e:
 					logger.error(str(e))
-			
 			return False

@@ -161,7 +161,6 @@ class TaskManager():
 		self.callTarget(targetKey)
 		self.runSchedulFun(delta, targetKey)
 
-
 class Task():
 	runstyle = SINGLE_STYLE
 	
@@ -183,7 +182,6 @@ class Task():
 		if self._task_in_reactor != None:
 			self._task_in_reactor.cancel()
 
-
 class LoopTask(Task):
 	runstyle = SINGLE_STYLE
 	op_int = 0
@@ -200,7 +198,6 @@ class LoopTask(Task):
 			self._task_in_reactor = reactor.callLater(self.op_int, self.run, *args, **kwargs)
 		else:
 			self._run(*args, **kwargs)
-
 
 class SchedulTask(Task):
 	'''
@@ -237,7 +234,6 @@ class SchedulTask(Task):
 	def removeSchedul(self, time):
 		self.schedul_manager.remove(time)
 
-
 class SchedulManager():
 	
 	def __init__(self, task: SchedulTask):
@@ -265,7 +261,6 @@ class SchedulManager():
 	def pre(self, time):
 		return None
 
-
 class Schedul():
 	def __init__(self):
 		self.pre: Schedul = None
@@ -278,12 +273,10 @@ class Schedul():
 	def isTail(self):
 		return not self.next
 
-
 def runSchedul(taskmanager, delta):
 	if isinstance(taskmanager, TaskManager):
 		taskmanager.runAll()
 		reactor.callLater(delta, runSchedul, taskmanager, delta)
-
 
 def runAll(taskmanager):
 	if isinstance(taskmanager, TaskManager):

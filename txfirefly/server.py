@@ -25,7 +25,7 @@
 #
 #
 #
-from txfirefly.core.leafnode import leafNode
+from txfirefly.core.leafnode import leafNode, GlobalObject
 from txrpc.server import RPCServer
 
 class ServerNode(RPCServer,leafNode):
@@ -37,6 +37,7 @@ class ServerNode(RPCServer,leafNode):
 	
 	def run(self):
 		from twisted.internet import reactor
+		GlobalObject().node = self
 		d = self._doWhenStart()
 		d.addCallback(lambda ign : self.connectMaster())
 		reactor.run()

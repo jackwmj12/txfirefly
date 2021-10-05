@@ -27,6 +27,8 @@
 #
 from txfirefly.core.leafnode import leafNode
 from txrpc.client import RPCClient
+from txrpc.globalobject import GlobalObject
+
 
 class ClientNode(RPCClient,leafNode):
 	"""
@@ -36,9 +38,8 @@ class ClientNode(RPCClient,leafNode):
 		super(ClientNode, self).__init__(name)
 		
 	def run(self):
-		
 		from twisted.internet import reactor
-		
+		GlobalObject().node = self
 		d = self._doWhenStart()
 		d.addCallback(lambda ign: self.connectMaster())
 		reactor.run()

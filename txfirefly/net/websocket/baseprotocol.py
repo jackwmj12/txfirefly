@@ -31,6 +31,7 @@ from autobahn.twisted import WebSocketServerProtocol, WebSocketServerFactory
 from twisted.protocols import policies
 from txzmq import ZmqRequestTimeoutError
 
+from app.rpcapp.websocket.wsdatapack import WebsocketDataPackV1
 from txfirefly.net.common.manager import ConnectionManager
 from txfirefly.net.common.datapack import DataPackProtocol
 from txrpc.globalobject import GlobalObject
@@ -132,7 +133,7 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
 class WebSocketFactory(WebSocketServerFactory):
     protocol = WebSocket
 
-    def __init__(self, dataprotocl : Union[DataPackProtocol,None] ):
+    def __init__(self, dataprotocl : Union[WebsocketDataPackV1,None] ):
         super(WebSocketFactory,self).__init__()
         self.connmanager = ConnectionManager()
         self.dataprotocl = dataprotocl

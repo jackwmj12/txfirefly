@@ -59,7 +59,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         logger.info('Client %d login in.[%s,%d]' % (self.transport.sessionno, self.transport.client[0], self.transport.client[1]))
         self.conn_id = self.transport.sessionno  # 连接ID
         self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 30))
-        logger.info('客户端:{} {} 连入...'.format(self.transport.client[0], self.transport.client[1]))
+        logger.info('Client : {} {} connected...'.format(self.transport.client[0], self.transport.client[1]))
         self.datahandler = self.dataHandleCoroutine()  # 创建数据生成器
         self.datahandler.__next__()  # 创建一个生成器，当数据接收时，触发生成器
         self.factory.doConnectionMade(self,self.conn_id)
@@ -128,13 +128,13 @@ class BaseFactory(protocol.ServerFactory):
         '''
         self.dataprotocl = dataprotocl          # 设置协议类
 
-    def doConnectionMade(self, conn, conn_id):
+    def doConnectionMade(self, conn : BaseProtocol, conn_id : str):
         '''
         当连接建立时的处理
         '''
         self.connmanager.addConnection(conn,conn_id)
     
-    def doConnectionLost(self, conn, conn_id):
+    def doConnectionLost(self, conn : BaseProtocol, conn_id):
         '''
         连接断开时的处理
         '''
@@ -180,10 +180,9 @@ class BaseFactory(protocol.ServerFactory):
         '''
         :parameter
         '''
-        # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}>")
         coon = self.connmanager.getConnectionByID(sourceId)
         if coon:
-            self.connmanager.addConnection(coon,dstId)
+            self.connmanager.addConnection(coon.instance,dstId)
             self.connmanager.dropConnectionByID(sourceId)
             logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
         else:

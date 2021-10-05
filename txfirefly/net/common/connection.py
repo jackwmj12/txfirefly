@@ -25,13 +25,14 @@
 #
 #
 #
+from twisted.internet import protocol
 
 
 class Connection:
     '''
     '''
 
-    def __init__(self, _conn,id=None):
+    def __init__(self, _conn  : protocol.Protocol = None,id=None):
         '''
         id 连接的ID
         transport 连接的通道
