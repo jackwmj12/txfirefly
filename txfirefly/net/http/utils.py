@@ -28,6 +28,8 @@
 
 import json
 
+from loguru import logger
+from twisted.web.server import Request
 
 class FFdict():
 	
@@ -57,7 +59,6 @@ class FFdict():
 	def data(self):
 		return self._data
 
-
 class FFform(FFdict):
 	
 	def __init__(self, request):
@@ -66,6 +67,9 @@ class FFform(FFdict):
 		:param
 		'''
 		super().__init__()
+		# logger.debug(request.content.getvalue().decode())
+		# logger.debug(request.contentType)
+		# logger.debug(request.content.getvalue().decode())
 		self.get_from(json.loads(request.content.getvalue().decode()))
 	
 	def get_from(self, args):

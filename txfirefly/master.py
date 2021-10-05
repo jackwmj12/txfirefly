@@ -28,10 +28,13 @@
 import json
 
 from twisted.internet import defer
+from typing import List
 
 from txfirefly.net.http import KleinApp
 from txfirefly.net.http.utils import FFform
 from txfirefly.utils import restful
+from txrpc.distributed.child import Child
+from txrpc.distributed.manager import Node
 from txrpc.server import RPCServer
 from txfirefly.core import *
 from functools import wraps
@@ -81,8 +84,8 @@ with app.subroute("/apis") as app:
     @app.route("/get-config", methods=["GET"])
     def get_config(request):
         """
-		:parameter
-		"""
+        :parameter
+        """
         # logger.debug(request)
         # logger.debug(request.method)
         # logger.debug(request.json)
@@ -91,8 +94,8 @@ with app.subroute("/apis") as app:
     @app.route("/set-config", methods=["POST"])
     def set_config(request):
         """
-		:parameter
-		"""
+        :parameter
+        """
         # logger.debug(request)
         # logger.debug(request.method)
         # logger.debug(request.json)
@@ -100,51 +103,60 @@ with app.subroute("/apis") as app:
     @app.route("/stop-all", methods=["POST"])
     def stop_all(request):
         """
-		:parameter
-		"""
-        logger.debug(request)
-        # logger.debug(request.method)
-        # logger.debug(request.json)
-        for remote in GlobalObject().node.pbRoot.dnsmanager._nodes.values():
-            d = remote.getChild().callbackChild('serverStop')
-            d.addCallback(ErrorBack)
-        from twisted.internet import defer, reactor
-        reactor.callLater(0.5, reactor.stop)
-        return "stop"
+        :parameter
+        """
+        for node in GlobalObject().node.pbRoot.dnsmanager._nodes.values():
+            for remote in node.children:
+                if remote:
+                    d = remote.callbackChild('serverStop')
+                    d.addCallback(ErrorBack)
+        from twisted.internet import reactor
+        reactor.callLater(3, reactor.stop)
 
     @app.route("/reload-all", methods=["POST"])
     def reload_all(request):
         """
-		:parameter
-		"""
-        logger.debug(request)
-        # logger.debug(request.method)
-        # logger.debug(request.json)
-        for remote in GlobalObject().node.pbRoot.dnsmanager._nodes.values():
-            d = remote.callbackChild('serverReload')
-            d.addCallback(ErrorBack)
-        from twisted.internet import defer, reactor
-        reactor.callLater(0.5, reactor.stop)
-        return "stop"
+        :parameter
+        """
+        for node in GlobalObject().node.pbRoot.dnsmanager._nodes.values():
+            for remote in node.children:
+                if remote:
+                    d = remote.callbackChild('serverReload')
+                    d.addCallback(ErrorBack)
     
     @app.route("/start-node", methods=["POST"])
     def start_node(request):
         """
         :parameter
         """
-        # logger.debug(request)
-        # logger.debug(request.method)
-        # logger.debug(request.json)
+        logger.debug(request)
+
+    @app.route("/stop-nodes", methods=["POST"])
+    def stop_nodes(request):
+        """
+        :parameter
+        """
+        form = FFform(request)
+        nodeName = form.get("name",None)
+        if nodeName :
+            node : Node = GlobalObject().node.pbRoot.dnsmanager.getNode(nodeName)
+            for remote in node.children:
+                if remote:
+                    d = remote.callbackChild('serverStop')
+                    d.addCallback(ErrorBack)
 
     @app.route("/stop-node", methods=["POST"])
     def stop_node(request):
         """
-        :parameter
-        """
-        # logger.debug(request)
-        # logger.debug(request.method)
-        # logger.debug(request.json)
-
+		:parameter
+		"""
+        form = FFform(request)
+        nodeId = form.get("id", None,int)
+        remote: Child = GlobalObject().node.pbRoot.dnsmanager.getChildById(nodeId)
+        if remote:
+            d = remote.callbackChild('serverStop')
+            d.addCallback(ErrorBack)
+      
 def doChildConnect(name, transport):
     '''
     :return
