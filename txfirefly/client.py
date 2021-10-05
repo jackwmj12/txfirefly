@@ -39,7 +39,6 @@ class ClientNode(RPCClient,leafNode):
 		
 	def run(self):
 		from twisted.internet import reactor
-		GlobalObject().node = self
 		d = self._doWhenStart()
 		d.addCallback(lambda ign: self.connectMaster())
 		reactor.run()
