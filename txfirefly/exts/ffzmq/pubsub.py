@@ -83,6 +83,7 @@ class SubModel():
     
     def subscribe(self,topics=None):
         if self._sub:
+            self._sub.unsubscribe(b"")
             if isinstance(topics,List):
                 for topic in topics:
                     self._subscribe(topic)

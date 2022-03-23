@@ -44,6 +44,7 @@ class RpcRestful():
 	SUCCESS = 200
 	RELAY = 202
 	CLOSE = 203
+	SUB = 204
 	ERROR = 500
 
 	@classmethod
@@ -82,6 +83,14 @@ class RpcRestful():
 	def error(cls, data=None, messages : Union[List,bytes] = []):
 		return {
 			"code": cls.ERROR,
+			"data": data,
+			"message": messages,
+		}
+
+	@classmethod
+	def sub(cls, data=None, messages: Union[List, bytes] = []):
+		return {
+			"code": cls.SUB,
 			"data": data,
 			"message": messages,
 		}

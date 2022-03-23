@@ -62,7 +62,6 @@ def start2():
 	# 		logger.debug(response.status)
 	# 		logger.debug(response.text())
 	ret = yield FFrequest.get("http://httpbin.org")
-	# logger.debug(ret)
 	defer.returnValue(ret)
 
 @app.startServiceHandle

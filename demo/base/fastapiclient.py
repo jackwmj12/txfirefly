@@ -66,7 +66,6 @@ def register_rpc(app: FastAPI) -> None:
 		asyncioreactor.install(eventloop=loop)
 		
 		from txfirefly.client import ClientNode
-		from txfirefly.exts.ffrequest import FFrequest
 		from txrpc.globalobject import GlobalObject
 		from twisted.internet import defer
 		

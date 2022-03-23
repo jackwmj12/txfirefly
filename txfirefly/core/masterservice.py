@@ -62,6 +62,7 @@ def remoteConnect(name, remote : dict,app : List[str]):
     GlobalObject().remote_map[remote_name].setWeight(weight)
     GlobalObject().remote_map[remote_name].connect((host, port))
     logger.debug(f"当前节点 : {name} 连接节点 : {remote_name} 成功 准备导入服务 : {app}")
+    GlobalObject().node.service_path = app
     delay_import(app)
 
 @masterserviceHandle

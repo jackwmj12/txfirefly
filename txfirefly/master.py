@@ -96,9 +96,6 @@ with app.subroute("/apis") as app:
         """
         :parameter
         """
-        # logger.debug(request)
-        # logger.debug(request.method)
-        # logger.debug(request.json)
 
     @app.route("/stop-all", methods=["POST"])
     def stop_all(request):

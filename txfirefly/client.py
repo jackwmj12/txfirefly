@@ -38,11 +38,18 @@ class ClientNode(RPCClient,leafNode):
 		super(ClientNode, self).__init__(name)
 		
 	def run(self):
+		self.beforeRun()
 		from twisted.internet import reactor
-		d = self._doWhenStart()
-		d.addCallback(lambda ign: self.connectMaster())
 		reactor.run()
 	
 	def install(self):
+		d = self._doWhenStart()
+		d.addCallback(lambda ign: self.connectMaster())
+
+	def prepare(self):
+		d = self._doWhenStart()
+		d.addCallback(lambda ign: self.connectMaster())
+
+	def beforeRun(self):
 		d = self._doWhenStart()
 		d.addCallback(lambda ign: self.connectMaster())
