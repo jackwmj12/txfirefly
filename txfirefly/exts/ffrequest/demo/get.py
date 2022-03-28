@@ -48,7 +48,7 @@ def doGet(**kwargs):
 		''':return
 		'''
 		
-		d = Request.get(
+		d = FFrequest.get(
 			url=kwargs.get('url', None),
 			params=kwargs.get('params', None),
 			header=kwargs.get('header', None),

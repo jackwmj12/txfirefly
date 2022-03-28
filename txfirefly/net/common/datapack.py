@@ -33,6 +33,6 @@ class DataPackProtocol:
 		'''
 	
 	def pack(self, data):
-		'''打包数据包
 		'''
-	# return data
+		打包数据包
+		'''

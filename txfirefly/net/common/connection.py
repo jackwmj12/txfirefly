@@ -30,25 +30,28 @@ from twisted.internet import protocol
 
 class Connection:
     '''
+        连接实例
     '''
 
     def __init__(self, _conn  : protocol.Protocol = None,id=None):
         '''
-        id 连接的ID
-        transport 连接的通道
+            id 连接的ID
+            _conn 连接的通道
         '''
         if not id:
             self.id = _conn.transport.sessionno
         else:
             self.id =id
-        self.instance = _conn
+        self.instance : protocol.Protocol= _conn
 
     def loseConnection(self):
-        '''断开与客户端的连接
+        '''
+            断开与客户端的连接
         '''
         self.instance.transport.loseConnection()
 
     def safeToWriteData(self,msg):
-        """发送消息
+        """
+            发送消息
         """
         self.instance.safeToWriteData(msg)

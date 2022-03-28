@@ -138,15 +138,9 @@ class BaseFactory(protocol.ServerFactory):
         '''
         连接断开时的处理
         '''
-        self.connmanager.dropConnectionByID(conn_id)
+        if conn == self.connmanager.getConnectionByID(conn_id).instance:
+            self.connmanager.dropConnectionByID(conn_id)
         logger.info("Clients residue : {}".format(self.connmanager.getNowConnCnt()))
-    
-    # def doConnectionLost(self, conn, conn_id):
-    #     '''
-    #     连接断开时的处理
-    #     '''
-    #     self.connmanager.dropConnectionByID(conn_id,conn)
-    #     logger.info("Clients residue : {}".format(self.connmanager.getNowConnCnt()))
 
     def doDataReceived(self, conn, commandID, data):
         '''
@@ -182,9 +176,11 @@ class BaseFactory(protocol.ServerFactory):
         '''
         coon = self.connmanager.getConnectionByID(sourceId)
         if coon:
-            self.connmanager.addConnection(coon.instance,dstId)
             self.connmanager.dropConnectionByID(sourceId)
-            logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
+            self.connmanager.addConnection(coon.instance,dstId)
+            # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
+            logger.debug(f"连接池 连接重置 <{sourceId}> -> <{dstId}> 成功")
         else:
-            logger.error("the sourceId is not exist")
+            # logger.error("the sourceId is not exist")
+            logger.debug(f"连接池 初始连接 <{sourceId}> 不存在")
             

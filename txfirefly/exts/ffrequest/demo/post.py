@@ -27,7 +27,7 @@
 #
 from twisted.internet import task
 
-from txfirefly.exts.ffrequest import Request
+from txfirefly.exts.ffrequest import FFrequest
 
 
 def doPost(**kwargs):
@@ -45,7 +45,7 @@ def doPost(**kwargs):
 	def fun(x):
 		''':return
 		'''
-		d = Request.post(
+		d = FFrequest.post(
 			url=kwargs.get('url', None),
 			json=kwargs.get('json', None),
 		)
