@@ -33,31 +33,31 @@ from loguru import logger
 
 
 class monitorProtocol(txredisapi.MonitorProtocol):
-	def connectionMade(self):
-		if self.passwd:
-			self.auth(self.passwd)
-		
-		self.doWhenConection()
-	
-	def doWhenConection(self):
-		'''
+    def connectionMade(self):
+        if self.passwd:
+            self.auth(self.passwd)
 
-		:return:
-		'''
-		self.monitor()
-	
-	def messageReceived(self, message):
-		logger.info(">> %s" % message)
-	
-	def connectionLost(self, reason):
-		logger.info("lost connection:{}".format(reason))
+        self.doWhenConection()
 
+    def doWhenConection(self):
+        '''
+
+        :return:
+        '''
+        self.monitor()
+
+    def messageReceived(self, message):
+        logger.info(">> %s" % message)
+
+    def connectionLost(self, reason):
+        logger.info("lost connection:{}".format(reason))
 
 class monitorFactory(txredisapi.MonitorFactory):
-	# also a wapper for the ReconnectingClientFactory
-	maxDelay = 120
-	continueTrying = True
-	protocol = monitorProtocol
-	
-	def init_app(self, config):
-		monitorProtocol.passwd = config.get("REDIS_PASSWORD", None)
+    # also a wapper for the ReconnectingClientFactory
+    maxDelay = 120
+    continueTrying = True
+    protocol = monitorProtocol
+
+
+    def init_app(self, config):
+        monitorProtocol.passwd = config.get("REDIS_PASSWORD", None)
