@@ -50,7 +50,7 @@ class RpcRestful():
 	ERROR = 500
 
 	@classmethod
-	def success(cls,data=None,messages : Union[List,bytes] = []):
+	def success(cls,data=None,messages : Union[List,bytes,None]=None):
 		'''
 			正常回复,通过 gateway 经过 net 将 message 回复给客户端
 		:param data:
@@ -64,7 +64,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def login(cls,data=None,messages : Union[List,bytes] = []):
+	def login(cls,data=None,messages : Union[List,bytes,None] = None):
 		'''
 			登录指令 gate 端 将客户连接信息返回给net端, net保存客户端连接信息在内存
 		:param data:
@@ -78,7 +78,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def relay(cls,data=None,messages : Union[List,bytes] = []):
+	def relay(cls,data=None,messages : Union[List,bytes,None] = None):
 		'''
 			relay : gate 端 通过 net 端 使用 zmq 广播
 		:param data:
@@ -92,7 +92,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def close(cls, data=None, messages : Union[List,bytes] = []):
+	def close(cls, data=None, messages : Union[List,bytes,None] = None):
 		'''
 			 gate 端 通知 net 断开连接
 		:param data:
@@ -106,7 +106,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def error(cls, data=None, messages : Union[List,bytes] = []):
+	def error(cls, data=None, messages : Union[List,bytes,None] = None):
 		'''
 			gate 端 通知 net 端有报错,并将报错信息反馈给 client 端
 		:param data:
@@ -120,7 +120,7 @@ class RpcRestful():
 		}
 
 	@classmethod
-	def sub(cls, data=None, messages: Union[List, bytes] = []):
+	def sub(cls, data=None, messages: Union[List, bytes,None] = None):
 		'''
 			订阅指令
 		:param data:
