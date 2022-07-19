@@ -34,8 +34,9 @@ PORT = 5982
 def loopSendMessage(factory):
 	''':param'''
 	from twisted.internet import reactor
+	logger.debug(f"topic:{'test'} publish hello world")
 	factory.publish(topic=b"test", message=b"hello world")
-	reactor.callLater(300, loopSendMessage, factory)
+	reactor.callLater(30, loopSendMessage, factory)
 
 if __name__ == '__main__':
 	from twisted.internet import reactor

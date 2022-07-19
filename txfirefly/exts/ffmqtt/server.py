@@ -59,7 +59,7 @@ class MQTTHandler(MQTTProtocol):
 		
 		self.connack(CONNACK_ACCEPTED)
 		
-		logger.debug('User %s added to online_users' % self.clientID)
+		logger.debug('client %s added to online_clients' % self.clientID)
 		
 		self.factory.onConnect(self)
 	
@@ -101,7 +101,6 @@ class MQTTHandler(MQTTProtocol):
 		logger.debug("Pingreq received from %s" % (self.clientID))
 		self.pingresp()
 		logger.debug("Pingresp send back to %s" % (self.clientID))
-
 
 class MQTTFactory(Factory):
 	
@@ -153,17 +152,17 @@ class MQTTFactory(Factory):
 			if self.connmanager.isInConnections(conn.clientID):
 				self.connmanager.dropConnectionByID(conn.clientID)
 				logger.info('Removed %s from online_users' % (conn.clientID))
-			conn.loseConnection()
+			conn.transport.loseConnection()
 		except Exception as e:
 			logger.debug(e)
 			logger.debug("the conn %s is already closed" % (conn.clientID))
 	
 	def publish(self, topic, message, qosLevel=0):
 		''':param'''
-		for user in self.connmanager.connections:
+		for connection in self.connmanager.connections:
 			logger.debug('publish methodtopics are: %s' % topic.decode())
-			logger.debug('user %s topics are: %s' % (user.instance.clientID, user.instance.topics))
-			if topic.decode() in user.instance.topics:
-				logger.debug('Found topic %s in %s' % (topic.decode(), user.instance.topics))
-				logger.debug('Sending publish (%s bytes) to %s' % (len(message), user.instance.clientID))
-				user.instance.publish(topic, message, qosLevel=GRANTED_QOS, retain=False, dup=False, messageId=None)
+			logger.debug('user %s topics are: %s' % (connection.instance.clientID, connection.instance.topics))
+			if topic.decode() in connection.instance.topics:
+				logger.debug('Found topic %s in %s' % (topic.decode(), connection.instance.topics))
+				logger.debug('Sending publish (%s bytes) to %s' % (len(message), connection.instance.clientID))
+				connection.instance.publish(topic, message, qosLevel=GRANTED_QOS, retain=False, dup=False, messageId=None)

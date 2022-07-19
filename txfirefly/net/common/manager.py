@@ -58,7 +58,7 @@ class ConnectionManager:
             加入一条连接
             @param _conn: Conn object
         '''
-        logger.debug(f"Connections add Connection: <{id}> : <{conn}>")
+        logger.debug(f"Connections add Connection: <{id}> : {conn}")
         if id and conn :
             if self.isInConnections(id):
                 logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
