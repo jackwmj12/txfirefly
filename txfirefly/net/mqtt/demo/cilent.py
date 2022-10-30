@@ -28,7 +28,7 @@
 from twisted.internet.protocol import ClientFactory, Protocol
 from typing import Tuple
 
-from txfirefly.exts.ffmqtt.mqtt import MQTTClient
+from txfirefly.net.mqtt.core.mqtt import MQTTClient
 
 HOST = 'localhost'
 PORT = 5982
