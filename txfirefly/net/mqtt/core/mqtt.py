@@ -25,28 +25,49 @@
 #
 #
 #
-
+import time
 from abc import ABCMeta, abstractmethod
 import binascii
 
 import six
-from twisted.internet.protocol import Protocol
+from twisted.internet.protocol import Protocol, Factory
 
 import random
 import logging
 import base64
 
 from twisted.protocols import policies
+from typing import List, Dict
 
+from txfirefly.net.mqtt.core.connmanager import ConnectionManager, ConnIsExistException
 from txrpc.globalobject import GlobalObject
 from loguru import logger
 
-CONNACK_ACCEPTED = six.int2byte(0x00)
+CONNACK_ACCEPTED = 0x00
+CONNACK_REJECT = 0x05
+
 GRANTED_QOS = 1
-# CLIENTS SHOULD CONNECT WITH QOS = 1
+
 AES_KEY = str.upper('theverysecretkey')
 PROTOCOL_NAME = "04MQTT4"
 MQTT_TIME_OUT = 5 * 60
+
+class MQTTPublishMessage():
+    def __init__(self,
+        topic: str,
+        message: bytearray,
+        qos: int,
+        dup: bool,
+        retain: bool,
+        messageId: int
+    ):
+        self.topic = topic
+        self.message = message
+        self.qos = qos
+        self.dup = dup
+        self.retain = retain
+        self.messageId = messageId
+        self.storeTime = int(time.time())
 
 class MQTT(Protocol, policies.TimeoutMixin):
     """
@@ -67,6 +88,7 @@ class MQTT(Protocol, policies.TimeoutMixin):
         self.buffer = bytearray()
         self.clientID = None
         self.topics = []
+        self.qos = 1
 
     ''' def aes_encrypt(self, data):
         IV = Random.new().read(32)
@@ -88,7 +110,7 @@ class MQTT(Protocol, policies.TimeoutMixin):
         pass
 
     @abstractmethod
-    def publishReceived(self, topic, message : bytearray, qos=0, dup=False, retain=False, messageId=None):
+    def publishReceived(self, topic, message : bytearray, qos: int=0, dup=False, retain: bool=False, messageId: int=None):
         pass
 
     @abstractmethod
@@ -131,7 +153,7 @@ class MQTT(Protocol, policies.TimeoutMixin):
 
     @abstractmethod
     def pingreqReceived(self):
-        pass
+        self.pingresp()
 
     @abstractmethod
     def pingrespReceived(self):
@@ -142,8 +164,12 @@ class MQTT(Protocol, policies.TimeoutMixin):
         pass
 
     def dataReceived(self, data):
+        # logger.debug(f"recv data : {[hex(d) for d in data]}")
         self.setTimeout(MQTT_TIME_OUT)
-        self._accumulatePacket(data)
+        try:
+            self._accumulatePacket(data)
+        except Exception as e:
+            logger.error(e)
 
     def _accumulatePacket(self, data):
         '''
@@ -193,9 +219,10 @@ class MQTT(Protocol, policies.TimeoutMixin):
             dup = (packet[0] & 0x08) == 0x08
             qos = (packet[0] & 0x06) >> 1
             retain = (packet[0] & 0x01) == 0x01
-        except:
+        except Exception as e:
+            logger.error(e)
             # Invalid packet type, throw away this packet
-            logging.error("Invalid packet type %x" % packet_type)
+            # logging.error("Invalid packet type %x" % packet_type)
             return
 
         # Strip the fixed header
@@ -204,7 +231,8 @@ class MQTT(Protocol, policies.TimeoutMixin):
             lenLen += 1
         packet = packet[lenLen + 1:]
         # Get the appropriate handler function
-        packetHandler = getattr(self, "_event_%s" % packet_type_name, None)
+        packetHandler = getattr(self, f"_event_{packet_type_name}", None)
+        # logger.debug(f"recv packetHandler : {packetHandler}")
         if packetHandler:
             packetHandler(packet, qos, dup, retain)
         else:
@@ -361,16 +389,18 @@ class MQTT(Protocol, policies.TimeoutMixin):
         if passwordFlag:
             password = self._decodeString(packet)
 
-        logger.debug(f"unpack the connect packet:\n"
-                     f"     clientID : {clientID}\n"
-                     f"     keepalive : {keepalive}\n"
-                     f"     willTopic : {willTopic}\n"
-                     f"     willMessage : {willMessage}\n"
-                     f"     willQos : {willQos}\n"
-                     f"     willRetain : {willRetain}\n"
-                     f"     cleanStart : {cleanStart}\n"
-                     f"     userName : {userName}\n"
-                     f"     password : {password}")
+        logger.debug(
+            f"recv a connect packet:\n"
+            f"     clientID : {clientID}\n"
+            f"     keepalive : {keepalive}\n"
+            f"     willTopic : {willTopic}\n"
+            f"     willMessage : {willMessage}\n"
+            f"     willQos : {willQos}\n"
+            f"     willRetain : {willRetain}\n"
+            f"     cleanStart : {cleanStart}\n"
+            f"     userName : {userName}\n"
+            f"     password : {password}"
+         )
 
         self.connectReceived(clientID, keepalive, willTopic,
                              willMessage, willQos, willRetain,
@@ -484,6 +514,7 @@ class MQTT(Protocol, policies.TimeoutMixin):
         payload.append(status)
 
         header.extend(self._encodeLength(len(payload)))
+        
         # logger.debug("the header is {header}".format(header=header))
         # logger.debug("the payload is {payload}".format(payload=payload))
 
@@ -500,6 +531,7 @@ class MQTT(Protocol, policies.TimeoutMixin):
         :param retain:
         :return:
         '''
+
         topic = self._decodeString(packet)
         packet = packet[len(topic) + 2:]
 
@@ -516,8 +548,7 @@ class MQTT(Protocol, policies.TimeoutMixin):
 
         self.publishReceived(topic, message, qos, dup, retain, messageId)
 
-    def publish(self, topic : str, message : bytearray, qosLevel : int = 0, retain : bool = False, dup : bool = False,
-        messageId  : bool = None):
+    def publish(self, topic : str, message: bytearray = None, qosLevel : int = 0, retain : bool = False, dup : bool = False,messageId  : int = None):
         '''
             1.固定头
                 ----------------------------------------------------------------
@@ -601,7 +632,6 @@ class MQTT(Protocol, policies.TimeoutMixin):
         :param messageId:
         :return:
         '''
-        # logger.debug(f"publish : topic : {topic} message : {message} qos : {qosLevel} retain : {retain} dup : {dup} messageId : {messageId}")
 
         header = bytearray()
         varHeader = bytearray()
@@ -616,8 +646,11 @@ class MQTT(Protocol, policies.TimeoutMixin):
             else:
                 varHeader.extend(self._encodeValue(random.randint(1, 0xFFFF)))
 
-        payload.extend(message)
+        if message:
+            payload.extend(message)
+
         header.extend(self._encodeLength(len(varHeader) + len(payload)))
+
         self.writeByteArray(header)
         self.writeByteArray(varHeader)
         self.writeByteArray(payload)
@@ -681,7 +714,7 @@ class MQTT(Protocol, policies.TimeoutMixin):
         messageId = self._decodeValue(packet[:2])
         self.pubrecReceived(messageId)
 
-    def pubrec(self, messageId):
+    def pubrec(self, messageId: int):
         '''
             1.固定头
                 类型 5
@@ -709,6 +742,9 @@ class MQTT(Protocol, policies.TimeoutMixin):
 
         self.writeByteArray(header)
         self.writeByteArray(varHeader)
+        # logger.debug(32 * "*")
+        # logger.debug(f"---> <{self.clientID}> pubrel")
+        # logger.debug(32 * "*")
 
     def _event_pubrel(self, packet, qos, dup, retain):
         '''
@@ -751,6 +787,9 @@ class MQTT(Protocol, policies.TimeoutMixin):
 
         self.writeByteArray(header)
         self.writeByteArray(varHeader)
+        # logger.debug(32 * "*")
+        # logger.debug(f"---> <{self.clientID}> pubrel")
+        # logger.debug(32 * "*")
 
     def _event_pubcomp(self, packet, qos, dup, retain):
         '''
@@ -793,6 +832,9 @@ class MQTT(Protocol, policies.TimeoutMixin):
 
         self.writeByteArray(header)
         self.writeByteArray(varHeader)
+        # logger.debug(32 * "*")
+        # logger.debug(f"---> <{self.clientID}> pubcmp")
+        # logger.debug(32 * "*")
 
     def _event_subscribe(self, packet, qos, dup, retain):
         '''
@@ -1261,7 +1303,7 @@ class MQTT(Protocol, policies.TimeoutMixin):
                 break
         return length
 
-    def _decodeValue(self, valueArray):
+    def _decodeValue(self, valueArray) -> int:
         '''
             解码获得数字
         :param valueArray:
@@ -1334,3 +1376,340 @@ class MQTTClient(MQTT):
 
     def mqttConnected(self):
         pass
+
+class MQTTProtocol(MQTT):
+    '''
+
+    '''
+    factory: "MQTTServerFactory"
+
+    def connectReceived(self, clientID, keepalive, willTopic, willMessage, willQoS, willRetain, cleanStart,userName,password):
+        '''
+                MQTT 连接建立后调用
+            :param clientID:
+            :param keepalive:
+            :param willTopic:
+            :param willMessage:
+            :param willQoS:
+            :param willRetain:
+            :param cleanStart:
+            :return:
+        '''
+        self.clientID = clientID
+        self.keepalive = keepalive
+        self.willTopic = willTopic
+        self.willMessage = willMessage
+        self.willQoS = willQoS
+        self.willRetain = willRetain
+        self.cleanStart = cleanStart
+        self.userName = userName
+        self.password = password
+        if self.factory.authorization(self): # 登录校验成功
+            if self.factory.connmanager.isInConnections(clientID): # 当前是否在连接池内
+                self.factory.connmanager.getConnectionByID(clientID).loseConnection()
+                # self.factory.connmanager.dropConnectionByID(clientID)
+                raise ConnIsExistException()
+            self.connack(CONNACK_ACCEPTED)
+            self.factory.onConnect(self)
+        else:
+            self.connack(CONNACK_REJECT)
+
+    def subscribeReceived(self, topics, messageId):
+        '''
+        :param topics: topics are like {'topic','QoS'}
+        :param messageId:
+        :return:
+        '''
+        newtopics = [i[0] for i in topics[::2]]
+        for topic in newtopics:
+            if topic in self.topics:
+                logger.warning("User %s sent dublicate subscribe on topic %s" % (self.clientID, topic))
+            else:
+                self.topics.append(topic)
+        self.suback(len(topics), messageId)
+
+    def unsubscribeReceived(self, topics, messageId):
+        '''
+
+            :param topics:
+            :param messageId:
+            :return:
+        '''
+        for removetopic in topics:
+            if removetopic not in self.topics:
+                logger.warning("User %s unsubscribe topic %s failed" % (self.clientID, removetopic))
+            else:
+                self.topics.remove(removetopic)
+        self.unsuback(messageId)
+
+    def publish(self, topic : str, message: bytearray = None, qosLevel : int = 0, retain : bool = False, dup : bool = False,messageId  : int = None):
+        '''
+            1.固定头
+                ----------------------------------------------------------------
+                | bit   |  7  |  6  |  5  |  4  |  3  |   2   |   1   |   0    |
+                ----------------------------------------------------------------
+                | byte1 |    MQTT控制报文类型   | DUP | QoS-H | QoS-L | RETAIN |
+                |       |  0  |  0  |  1  |  1  |  X  |   X   |   X   |   X    |
+                ---------------------------------------------------------------
+                | byte2 | 剩余长度                                             |
+                ---------------------------------------------------------------
+                推送的固定头报文类型是3。
+                DUP是重发标志，如果DUP标志被设置为0，表示这是客户端或服务端第一次请求发送这个PUBLISH报文。如果DUP标志被设置为1，表示这可能是一个早前报文请求的重发。
+                Qos是服务质量等级，有三种状态。
+                    ----------------------------------------------------------------
+                    |    QOS值    |     bit2     |     bit1     |       描述       |
+                    ----------------------------------------------------------------
+                    |  0          |  0           |  0           | 最多分发一次     |
+                    ----------------------------------------------------------------
+                    |  1          |  0           |  1           | 至少分发一次     |
+                    ----------------------------------------------------------------
+                    |  2          |  1           |  0           | 只分发一次       |
+                    ----------------------------------------------------------------
+                    |  -          |  1           |  1           | 保留位           |
+                    ----------------------------------------------------------------
+                RETAIN是保留位，保留位的意义上一篇已经阐述。
+                值得注意的是如果想清除一个在服务端有保留有效荷载的topic，只要发送一个保留位为1切有效荷载为零字节的publish报文就行，
+                服务端会把这个空报文转发给订阅者，并清除这个topic的保留信息，后续再关注这个topic的客户端不会再收到消息了。
+            2.可变头
+                可变报头按顺序包含主题名和报文标识符。
+                主题名就是平时说的topic，推送订阅都是依靠这个标识，可以理解为其他mq的topic。
+                报文标识符就是报文的id，服务端用来唯一标识报文的属性，只有当QoS等级是1或2时，报文标识符（Packet Identifier）字段才能出现在PUBLISH报文中，因为这俩需要服务端答复
+                客户端，如果没有这个标识，服务端不知道要针对哪条报文进行答复。
+                可变头示例：
+                    ------------------------------------------------------------------------------------------
+                    | bit                |      描述         |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
+                    ------------------------------------------------------------------------------------------
+                    | Topic Name 主题名  |                                                                   |
+                    ------------------------------------------------------------------------------------------
+                    | byte 1             |  length MSB(0)    |  0  |  0  |  0  |  0  |  0  |  0  |  0  |  0  |
+                    -----------------------------------------------------------------------------------------
+                    | byte 2             |  length LSB(3)    |  0  |  0  |  0  |  0  |  0  |  0  |  1  |  1  |
+                    -----------------------------------------------------------------------------------------
+                    | byte 3             |    'a'(0x61)      |  0  |  1  |  1  |  0  |  0  |  0  |  0  |  1  |
+                    -----------------------------------------------------------------------------------------
+                    | byte 4             |    '/'(0x2F)      |  0  |  0  |  1  |  0  |  1  |  1  |  1  |  1  |
+                    -----------------------------------------------------------------------------------------
+                    | byte 5             |    'b'(0x62)      |  0  |  1  |  1  |  0  |  0  |  0  |  1  |  0  |
+                    -----------------------------------------------------------------------------------------
+                    | 报文标识符         |                                                                   |
+                    -----------------------------------------------------------------------------------------
+                    | byte 6             | 报文标识符 MSB(0) |  0  |  0  |  0  |  0  |  0  |  0  |  0  |  0  |
+                    -----------------------------------------------------------------------------------------
+                    | byte 7             | 报文标识符 LSB(10)|  0  |  0  |  0  |  0  |  1  |  0  |  1  |  0  |
+                    -----------------------------------------------------------------------------------------
+                 示例中的主题名为 “a/b”，长度等于3，报文标识符为 “10”
+            3.有效负载
+                有效载荷包含将被发布的应用消息。
+                数据的内容和格式是应用特定的。
+                有效载荷的长度这样计算：用固定报头中的剩余长度字段的值减去可变报头的长度。
+                包含零长度有效载荷的PUBLISH报文是合法的。
+                注意：根据固定头中的qos等级，接收到publish报文端需要给予响应。
+                    ----------------------------------------------------------------
+                    |   服务质量等级             |     预期响应                    |
+                    ----------------------------------------------------------------
+                    |  QoS 0                     |  无响应                         |
+                    ----------------------------------------------------------------
+                    |  QoS 1                     |  PUBACK报文                     |
+                    ----------------------------------------------------------------
+                    |  QoS 2                     |  PUBREC报文                     |
+                    ----------------------------------------------------------------
+                这里补充一下qos：
+                qos0：最多就发送一次，你别告诉我你收没收到，你找到订阅这个主题的你就推就行。
+                qos1：至少发送一次，发送完你告诉我你收没收到（PUBACK），如果你不告诉我，我就一直发。
+                qos2：确保一次送达，我给你发（PUBLISH），你给我回一个你收到了（PUBREC），
+                    我再给你发一个你确定你收到了吗（PUBREL），你再给我回一个收到了别发了求你了（PUBCOMP）
+        :param topic:
+        :param message:
+        :param qosLevel:
+        :param retain:
+        :param dup:
+        :param messageId:
+        :return:
+        '''
+        super().publish(topic, message, qosLevel, retain, dup ,messageId)
+        self.factory.onPublish(topic, message, qosLevel, retain, dup ,messageId)
+
+    def publishReceived(self, topic : str, message : bytearray, qos: int=0, dup: bool=False, retain: bool=False, messageId: int=None):
+        '''
+
+            :param topic:
+            :param message:
+            :param qos:
+            :param dup:
+            :param retain:
+            :param messageId:
+            :return:
+        '''
+        if qos == 2:
+            ############################### qos1 ######################################
+            # 0.1 收到 puber qos2 的PUB数据      0.2 缓存数据
+            # 1.1 向 puber 发送 pubrec           1.2
+            # 2.1 puber 回复 pubrel              2.2 向 suber publish 缓存的数据
+            # 3.1 向 puber 发送 PUBCOMP          3.2 suber 回复 pubrec
+            # 4.1 结束                           4.2 向 suber 发送 pubrel
+            # 5.1                                5.2 suber 回复 pubcomp
+            # 6.1                                6.2 删除缓存数据
+            qosMessage = MQTTPublishMessage(topic,message,qos,dup,retain,self.factory.getMessageId())
+            for connection in self.factory.connmanager.connections:
+                if topic in connection.getInstance().topics:
+                    self.factory.addQosMessageBuffer(connection.getInstance(), qosMessage)
+            #############################################################################
+            self.pubrec(messageId)
+        else:
+            ## qos0, qos1
+            for connection in self.factory.connmanager.connections:
+                if topic in connection.getInstance().topics:
+                    connection.getInstance().publish(topic, message, qosLevel=qos, retain=retain, dup=dup,messageId=self.factory.getMessageId())
+            if qos == 1:
+                ############################### qos1 ######################################
+                # 1.1 收到 puber qos1 的 pub数据     1.2 缓存数据
+                # 2.1                                2.2 向 suber publish qos1的数据
+                # 3.1 向 puber 发送 puback           3.2 suber 回复 puback
+                # 4.1                                4.2 删除缓存数据
+                ##########################################################################
+                self.puback(messageId)
+                ## qos0
+        return self.factory.onPublishReceived(self, topic, message, qosLevel=qos, retain=retain, dup=dup, messageId=messageId)
+
+    def pubackReceived(self, messageId):
+        '''
+        
+        :param messageId: 
+        :return: 
+        '''
+        ############################### qos1 ######################################
+        # 1.1 收到 puber qos1 的 pub数据     1.2 缓存数据
+        # 2.1                                2.2 向 suber publish qos1的数据
+        # 3.1 向 puber 发送 puback           3.2 suber 回复 puback
+        # 4.1                                4.2 删除缓存数据
+        ##########################################################################
+        # self.factory.removeQosMessageBuffer(self,messageId)
+
+    def pubrelReceived(self, messageId):
+        '''
+            此处本应该将qos缓存信息存入每个 connection,但是为了方便起见,只缓存,取出一个
+        :param messageId:
+        :return:
+        '''
+        qosMessage = self.factory.getQosMessageBuffer(self, messageId)
+        if qosMessage:
+            for connection in self.factory.connmanager.connections:
+                if qosMessage.topic in connection.instance.topics:
+                    connection.getInstance().publish(qosMessage.topic, qosMessage.message, qosLevel= qosMessage.qos, retain= qosMessage.retain, dup= qosMessage.dup, messageId=messageId)
+            self.pubcomp(messageId)
+
+    def pubrecReceived(self, messageId):
+        '''
+        :param messageId:
+        :return:
+        '''
+        self.pubrel(messageId)
+
+    def pubcompReceived(self, messageId):
+        '''
+
+        :param messageId:
+        :return:
+        '''
+        self.factory.removeQosMessageBuffer(self,messageId)
+
+    def disconnectReceived(self):
+        self.factory.onDisconnect(self)
+
+class MQTTServerFactory(Factory):
+
+    protocol = MQTTProtocol
+    _messageId = 0
+
+    def __init__(self):
+        '''
+        初始化
+        '''
+        self.qos2MessageBuffer: Dict[str, MQTTPublishMessage] = {}
+        self.service = None
+        self.connmanager: ConnectionManager = ConnectionManager()  # 连接管理器
+
+    def getQosMessageBuffer(self, conn, messageId: int):
+        '''
+
+        :param conn:
+        :param messageId:
+        :return:
+        '''
+        key = f"{conn.clientID}-{messageId}"
+        return self.qos2MessageBuffer.get(key, None)
+
+    def addQosMessageBuffer(self, conn: MQTTProtocol, message: MQTTPublishMessage):
+        '''
+
+        :param conn:
+        :param message:
+        :return:
+        '''
+        logger.debug(f"""
+            addQosMessageBuffer
+            conn : {conn}
+            message : {message}
+            key : f"{conn.clientID}-{message.messageId}"
+        """)
+        key = f"{conn.clientID}-{message.messageId}"
+        self.qos2MessageBuffer[key] = message
+
+    def removeQosMessageBuffer(self, conn: MQTTProtocol, messageId: int):
+        '''
+
+        :param conn:
+        :param message:
+        :return:
+        '''
+        logger.debug(f"""
+            removeQosMessageBuffer
+            conn : {conn}
+            messageId : {messageId}
+            key : f"{conn.clientID}-{messageId}"
+        """)
+        try:
+            key = f"{conn.clientID}-{messageId}"
+            del self.qos2MessageBuffer[key]
+        except Exception as e:
+            logger.error(e)
+
+    def authorization(self,conn: MQTTProtocol):
+        return True
+
+    def onConnect(self, conn: MQTTProtocol):
+        ''':param'''
+        self.connmanager.addConnection(conn, conn.clientID)
+
+    def onDisconnect(self, conn: MQTTProtocol):
+        '''
+            连接断开后出发
+        :param conn:
+        :return:
+        '''
+        logger.debug('client %s droped from the online_clients' % conn.clientID)
+        self.connmanager.dropConnectionByID(conn.clientID)
+
+    def onPublish(self, topic: str, message: bytearray = None, qosLevel: int = 0, retain: bool = False, dup: bool = False,
+                messageId: int = None):
+        '''
+
+        :param topic:
+        :param message:
+        :param qosLevel:
+        :param retain:
+        :param dup:
+        :param messageId:
+        :return:
+        '''
+        logger.debug(f"publish : topic : {topic} message : {message} qos : {qosLevel} retain : {retain} dup : {dup} messageId : {messageId}")
+
+    def onPublishReceived(self, conn: MQTTProtocol, topic : str, message : bytearray, qosLevel=0, dup=False, retain=False, messageId=None):
+        '''
+
+        :return:
+        '''
+
+    def getMessageId(self):
+        self._messageId += 1
+        return self._messageId

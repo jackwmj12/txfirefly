@@ -28,29 +28,32 @@
 from twisted.internet import protocol
 from typing import List
 
+from twisted.internet.protocol import Protocol
+
+
 class Connection:
     '''
         连接实例
     '''
 
-    def __init__(self, _conn = None, clientID = None):
+    def __init__(self, proto_instance: Protocol = None, clientID = None):
         '''
 
         :param _conn:   连接实例
         :param clinetId:   客户端ID
         '''
         if not clientID:
-            self.id = f"sessionno:{_conn.transport.sessionno}"
+            self.id = f"sessionno:{proto_instance.transport.sessionno}"
         else:
             self.id = clientID
-        self.instance = _conn
+        self._instance = proto_instance
         self.subs : List[str] = []
 
     def loseConnection(self):
         '''
             断开与客户端的连接
         '''
-        self.instance.transport.loseConnection()
+        self._instance.transport.loseConnection()
 
     def getInstance(self):
-        return self.instance
+        return self._instance

@@ -27,8 +27,6 @@
 #
 import sys
 
-from txfirefly.net.mqtt.server import MQTTFactory
-
 PORT = 5982
 
 def loopSendMessage(factory):

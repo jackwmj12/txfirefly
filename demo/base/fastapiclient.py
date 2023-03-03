@@ -81,7 +81,6 @@ def register_rpc(app: FastAPI) -> None:
 		@app.state.client.startServiceHandle
 		@defer.inlineCallbacks
 		def start2():
-			logger.debug(32 * "*")
 			ret = yield treq.get("http://httpbin.org")
 			logger.debug(ret)
 			defer.returnValue(ret)

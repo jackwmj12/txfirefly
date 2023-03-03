@@ -64,7 +64,7 @@ class ConnectionManager:
         :param id:
         :return:
         '''
-        logger.debug(f"Connections add Connection: <{id}> : {conn}")
+        logger.debug(f"Connections add Connection<{id}>")
         if id and conn :
             if self.isInConnections(id):
                 logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
@@ -101,7 +101,9 @@ class ConnectionManager:
         :return:
         '''
         try:
-            del self._connections[clinetID]
+            if self.isInConnections(clinetID):
+                del self._connections[clinetID]
+                logger.error(f"连接池 连接 <{clinetID}> 删除 成功")
         except Exception as e:
             logger.error(f"连接池 连接 <{clinetID}> 删除 失败 {e}")
 
