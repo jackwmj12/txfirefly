@@ -3,7 +3,7 @@
 # @Author   : joe lin
 # @FILE     : __init__.py
 # @Time     : 2021-02-21 18:07
-# @Software : tiseal_app
+# @Software : admin_app
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 

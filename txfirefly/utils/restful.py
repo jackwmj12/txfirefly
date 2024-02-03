@@ -3,7 +3,7 @@
 # @Author   : joe lin
 # @FILE     : restful.py
 # @Time     : 2021-07-09 17:16
-# @Software : od_app
+# @Software : admin_app
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 
@@ -44,6 +44,8 @@ def _alchemy_encoder(obj):
         return obj.strftime("%Y-%m-%d %H:%M:%S")
     elif isinstance(obj, datetime.date):
         return obj.strftime("%Y-%m-%d")
+    elif isinstance(obj, datetime.time):
+        return obj.strftime("%H:%M:%S")
     elif isinstance(obj, decimal.Decimal):
         return float(obj)
 

@@ -59,10 +59,14 @@ class MQTTPublishMessage():
         qos: int,
         dup: bool,
         retain: bool,
-        messageId: int
+        messageId: int,
+        senderId: str,
+        recverId: str,
     ):
         self.topic = topic
         self.message = message
+        self.senderId = senderId
+        self.recverId = recverId
         self.qos = qos
         self.dup = dup
         self.retain = retain
@@ -742,9 +746,8 @@ class MQTT(Protocol, policies.TimeoutMixin):
 
         self.writeByteArray(header)
         self.writeByteArray(varHeader)
-        # logger.debug(32 * "*")
-        # logger.debug(f"---> <{self.clientID}> pubrel")
-        # logger.debug(32 * "*")
+#         logger.debug(f"""
+# 向客户端 : {self.clientID} 发送 PUBREC 信息""")
 
     def _event_pubrel(self, packet, qos, dup, retain):
         '''
@@ -787,9 +790,8 @@ class MQTT(Protocol, policies.TimeoutMixin):
 
         self.writeByteArray(header)
         self.writeByteArray(varHeader)
-        # logger.debug(32 * "*")
-        # logger.debug(f"---> <{self.clientID}> pubrel")
-        # logger.debug(32 * "*")
+#         logger.debug(f"""
+# 向客户端 : {self.clientID} 发送 PUBREL 信息""")
 
     def _event_pubcomp(self, packet, qos, dup, retain):
         '''
@@ -801,6 +803,8 @@ class MQTT(Protocol, policies.TimeoutMixin):
         :param retain:
         :return:
         '''
+#         logger.debug(f"""
+# 收到客户端 : {self.clientID} 回复的 PUBCOMP 信息""")
         messageId = self._decodeValue(packet[:2])
         self.pubcompReceived(messageId)
 
@@ -832,9 +836,8 @@ class MQTT(Protocol, policies.TimeoutMixin):
 
         self.writeByteArray(header)
         self.writeByteArray(varHeader)
-        # logger.debug(32 * "*")
-        # logger.debug(f"---> <{self.clientID}> pubcmp")
-        # logger.debug(32 * "*")
+#         logger.debug(f"""
+# 向客户端 : {self.clientID} 发送 PUBCOMP 信息""")
 
     def _event_subscribe(self, packet, qos, dup, retain):
         '''
@@ -1406,8 +1409,7 @@ class MQTTProtocol(MQTT):
         self.password = password
         if self.factory.authorization(self): # 登录校验成功
             if self.factory.connmanager.isInConnections(clientID): # 当前是否在连接池内
-                self.factory.connmanager.getConnectionByID(clientID).loseConnection()
-                # self.factory.connmanager.dropConnectionByID(clientID)
+                self.factory.connmanager.getConnectionByID(clientID).loseConnection() # 断开连接
                 raise ConnIsExistException()
             self.connack(CONNACK_ACCEPTED)
             self.factory.onConnect(self)
@@ -1540,25 +1542,34 @@ class MQTTProtocol(MQTT):
             :param messageId:
             :return:
         '''
+        # logger.debug(f"""
+        #   clinetId : {self.clientID}
+        #   messageId : {messageId}
+        #   topic : {topic}
+        #   message : {message.decode()}
+        #   qos : {qos}""")
         if qos == 2:
             ############################### qos1 ######################################
             # 0.1 收到 puber qos2 的PUB数据      0.2 缓存数据
             # 1.1 向 puber 发送 pubrec           1.2
             # 2.1 puber 回复 pubrel              2.2 向 suber publish 缓存的数据
-            # 3.1 向 puber 发送 PUBCOMP          3.2 suber 回复 pubrec
+            # 3.1 向 puber 发送 pubcomp          3.2 suber 回复 pubrec
             # 4.1 结束                           4.2 向 suber 发送 pubrel
             # 5.1                                5.2 suber 回复 pubcomp
             # 6.1                                6.2 删除缓存数据
-            qosMessage = MQTTPublishMessage(topic,message,qos,dup,retain,self.factory.getMessageId())
             for connection in self.factory.connmanager.connections:
                 if topic in connection.getInstance().topics:
-                    self.factory.addQosMessageBuffer(connection.getInstance(), qosMessage)
+                    qosMessage = MQTTPublishMessage(topic, message, qos, dup, retain, messageId, self.clientID, connection.getInstance().clientID)
+                    self.factory.addQosMessageBuffer(connection.getInstance().clientID, qosMessage)
             #############################################################################
             self.pubrec(messageId)
         else:
             ## qos0, qos1
             for connection in self.factory.connmanager.connections:
                 if topic in connection.getInstance().topics:
+                    logger.debug(f"""
+                        向客户端 : {connection.id}
+                        转发数据 : {message}""")
                     connection.getInstance().publish(topic, message, qosLevel=qos, retain=retain, dup=dup,messageId=self.factory.getMessageId())
             if qos == 1:
                 ############################### qos1 ######################################
@@ -1568,6 +1579,7 @@ class MQTTProtocol(MQTT):
                 # 4.1                                4.2 删除缓存数据
                 ##########################################################################
                 self.puback(messageId)
+            # else:
                 ## qos0
         return self.factory.onPublishReceived(self, topic, message, qosLevel=qos, retain=retain, dup=dup, messageId=messageId)
 
@@ -1583,26 +1595,30 @@ class MQTTProtocol(MQTT):
         # 3.1 向 puber 发送 puback           3.2 suber 回复 puback
         # 4.1                                4.2 删除缓存数据
         ##########################################################################
-        # self.factory.removeQosMessageBuffer(self,messageId)
 
     def pubrelReceived(self, messageId):
         '''
-            此处本应该将qos缓存信息存入每个 connection,但是为了方便起见,只缓存,取出一个
         :param messageId:
         :return:
         '''
-        qosMessage = self.factory.getQosMessageBuffer(self, messageId)
-        if qosMessage:
-            for connection in self.factory.connmanager.connections:
-                if qosMessage.topic in connection.instance.topics:
-                    connection.getInstance().publish(qosMessage.topic, qosMessage.message, qosLevel= qosMessage.qos, retain= qosMessage.retain, dup= qosMessage.dup, messageId=messageId)
-            self.pubcomp(messageId)
+        logger.debug(f"""收到客户端 : {self.clientID} 回复的 PUBREL 信息""")
+        qosMessages = self.factory.getQosMessageBufferBySenderId(self.clientID, messageId)
+        logger.debug(f"""获取缓存中的 qos 信息 {qosMessages}""")
+        for qosMessage in qosMessages:
+            connection = self.factory.connmanager.getConnectionByID(qosMessage.recverId)
+            if connection:
+                logger.debug(f"""向客户端 : {connection.id} 转发数据 : {qosMessage.message}""")
+                connection.getInstance().publish(qosMessage.topic, qosMessage.message, qosLevel=qosMessage.qos,retain=qosMessage.retain, dup=qosMessage.dup, messageId=messageId)
+
+        self.pubcomp(messageId)
 
     def pubrecReceived(self, messageId):
         '''
         :param messageId:
         :return:
         '''
+#         logger.debug(f"""
+# 收到客户端 : {self.clientID} 回复的 PUBREC 信息""")
         self.pubrel(messageId)
 
     def pubcompReceived(self, messageId):
@@ -1611,7 +1627,7 @@ class MQTTProtocol(MQTT):
         :param messageId:
         :return:
         '''
-        self.factory.removeQosMessageBuffer(self,messageId)
+        self.factory.removeQosMessageBuffer(self.clientID,messageId)
 
     def disconnectReceived(self):
         self.factory.onDisconnect(self)
@@ -1625,54 +1641,67 @@ class MQTTServerFactory(Factory):
         '''
         初始化
         '''
-        self.qos2MessageBuffer: Dict[str, MQTTPublishMessage] = {}
+        self.qos2MessageBuffer: Dict[None, MQTTPublishMessage] = {}
         self.service = None
         self.connmanager: ConnectionManager = ConnectionManager()  # 连接管理器
 
-    def getQosMessageBuffer(self, conn, messageId: int):
+    def getQosMessageBufferBySenderId(self, senderId: str, messageId: int):
         '''
 
         :param conn:
         :param messageId:
         :return:
         '''
-        key = f"{conn.clientID}-{messageId}"
+        qosMessages = []
+        for qosMessage in self.qos2MessageBuffer.values():  # type: MQTTPublishMessage
+            if qosMessage.senderId == senderId and qosMessage.messageId == messageId:
+#                 logger.debug(f""
+# "buffer message : {self.qos2MessageBuffer}""")
+                qosMessages.append(qosMessage)
+        return qosMessages
+
+    def getQosMessageBufferByRecverId(self, recverId, messageId: int):
+        '''
+
+        :param conn:
+        :param messageId:
+        :return:
+        '''
+        key = f"{recverId}-{messageId}"
+#         logger.debug(f"""
+# buffer message : {self.qos2MessageBuffer}""")
         return self.qos2MessageBuffer.get(key, None)
 
-    def addQosMessageBuffer(self, conn: MQTTProtocol, message: MQTTPublishMessage):
+    def addQosMessageBuffer(self, recverId: str,message: MQTTPublishMessage):
         '''
 
         :param conn:
         :param message:
         :return:
         '''
-        logger.debug(f"""
-            addQosMessageBuffer
-            conn : {conn}
-            message : {message}
-            key : f"{conn.clientID}-{message.messageId}"
-        """)
-        key = f"{conn.clientID}-{message.messageId}"
+#         logger.debug(f"""
+# addQosMessageBufferFunction
+# conn : {recverId}
+# message : {message}
+# key : {recverId}-{message.messageId}" """)
+        key = f"{recverId}-{message.messageId}"
         self.qos2MessageBuffer[key] = message
 
-    def removeQosMessageBuffer(self, conn: MQTTProtocol, messageId: int):
+    def removeQosMessageBuffer(self, recverId: str, messageId: int):
         '''
 
         :param conn:
         :param message:
         :return:
         '''
-        logger.debug(f"""
-            removeQosMessageBuffer
-            conn : {conn}
-            messageId : {messageId}
-            key : f"{conn.clientID}-{messageId}"
-        """)
-        try:
-            key = f"{conn.clientID}-{messageId}"
-            del self.qos2MessageBuffer[key]
-        except Exception as e:
-            logger.error(e)
+#         logger.debug(f"""
+# removeQosMessageBufferFunction
+# conn : {recverId}
+# messageId : {messageId}
+# key : {recverId}-{messageId} """)
+        qosMessage = self.getQosMessageBufferByRecverId(recverId, messageId)
+        if qosMessage:
+            del qosMessage
 
     def authorization(self,conn: MQTTProtocol):
         return True
@@ -1702,9 +1731,22 @@ class MQTTServerFactory(Factory):
         :param messageId:
         :return:
         '''
-        logger.debug(f"publish : topic : {topic} message : {message} qos : {qosLevel} retain : {retain} dup : {dup} messageId : {messageId}")
+        # logger.debug(f"""
+        #     publish:
+        #     topic<{topic}>
+        #     messageId : {messageId}
+        #     message :
+        #         {message}
+        #     qos : {qosLevel} retain : {retain} dup : {dup}
+        # """)
 
     def onPublishReceived(self, conn: MQTTProtocol, topic : str, message : bytearray, qosLevel=0, dup=False, retain=False, messageId=None):
+        '''
+
+        :return:
+        '''
+
+    def onPubrelReceived(self, conn: MQTTProtocol, topic : str, message : bytearray, qosLevel=0, dup=False, retain=False, messageId=None):
         '''
 
         :return:

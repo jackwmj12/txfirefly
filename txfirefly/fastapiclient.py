@@ -3,7 +3,7 @@
 # @Author   : joe lin
 # @FILE     : fastapiclient.py
 # @Time     : 2021-03-08 23:36
-# @Software : tiseal_app
+# @Software : admin_app
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 

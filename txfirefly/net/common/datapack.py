@@ -25,6 +25,7 @@
 #
 #
 #
+
 class DataPackProtocol:
 	
 	def unpack(self, data):

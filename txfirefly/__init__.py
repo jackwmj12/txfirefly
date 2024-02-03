@@ -3,7 +3,7 @@
 # @Author   : joe lin
 # @FILE     : __init__.py.py
 # @Time     : 2022-08-22 11:17
-# @Software : od_app
+# @Software : admin_app
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 

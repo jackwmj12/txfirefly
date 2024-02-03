@@ -31,25 +31,34 @@ from txrpc.globalobject import GlobalObject
 
 
 class ClientNode(RPCClient,leafNode):
-	"""
-	:param
-	"""
-	def __init__(self, name : str):
-		super(ClientNode, self).__init__(name)
-		
-	def run(self):
-		self.beforeRun()
-		from twisted.internet import reactor
-		reactor.run()
-	
-	def install(self):
-		d = self._doWhenStart()
-		d.addCallback(lambda ign: self.connectMaster())
+    """
+    :param
+    """
+    def __init__(self, name : str, single=False):
+        '''
+            节点对象
+        :param name:
+        :param single:
+        '''
+        super(ClientNode, self).__init__(name)
+        self.single = single
 
-	def prepare(self):
-		d = self._doWhenStart()
-		d.addCallback(lambda ign: self.connectMaster())
+    def run(self):
+        self.beforeRun()
+        from twisted.internet import reactor
+        reactor.run()
 
-	def beforeRun(self):
-		d = self._doWhenStart()
-		d.addCallback(lambda ign: self.connectMaster())
+    def install(self):
+        d = self._doWhenStart()
+        if not self.single:
+            d.addCallback(lambda ign: self.connectMaster())
+
+    def prepare(self):
+        d = self._doWhenStart()
+        if not self.single:
+            d.addCallback(lambda ign: self.connectMaster())
+
+    def beforeRun(self):
+        d = self._doWhenStart()
+        if not self.single:
+            d.addCallback(lambda ign: self.connectMaster())
