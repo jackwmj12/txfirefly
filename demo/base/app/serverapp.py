@@ -24,8 +24,8 @@
 #                 神兽保佑，代码无BUG!
 #
 
-from txrpc.globalobject import remoteserviceHandle, rootserviceHandle
+from txrpc.globalobject import rootServiceHandle
 
-@rootserviceHandle
+@rootServiceHandle
 def server_test():
     return "this is a response from server"

@@ -39,7 +39,7 @@ import base64
 from twisted.protocols import policies
 from typing import List, Dict
 
-from txfirefly.net.mqtt.core.connmanager import ConnectionManager, ConnIsExistException
+from txfirefly.proto.mqtt.core.connmanager import ConnectionManager, ConnIsExistException
 from txrpc.globalobject import GlobalObject
 from loguru import logger
 

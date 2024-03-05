@@ -31,7 +31,7 @@ from twisted.internet import protocol
 
 from loguru import logger
 
-from txfirefly.net.mqtt.core.conn import Connection
+from txfirefly.proto.mqtt.core.conn import Connection
 
 
 class ConnIsExistException(Exception):
@@ -64,7 +64,7 @@ class ConnectionManager:
         :param id:
         :return:
         '''
-        logger.debug(f"Connections add Connection<{id}>")
+        # logger.debug(f"Connections add Connection<{id}>")
         if id is not None and conn :
             if self.isInConnections(id):
                 logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")

@@ -62,7 +62,6 @@ from twisted.protocols import policies
 
 from demo.tcp.baseprotocol import BaseProtocol, BaseFactory, PROTOCOL_CHECK_FAILED
 from txrpc.globalobject import GlobalObject, localservice
-from txfirefly.utils import RpcRestful
 
 PROTOCOL_MIN_LENGTH = 1 # 
 

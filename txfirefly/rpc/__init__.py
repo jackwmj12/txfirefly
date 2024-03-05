@@ -1,9 +1,9 @@
 # !/usr/bin/env Python3
 # -*- coding: utf-8 -*-
 # @Author   : joe lin
-# @FILE     : fastapiclient.py
-# @Time     : 2021-03-08 23:36
-# @Software : admin_app
+# @FILE     : __init__.py.py
+# @Time     : 2024-03-05 16:29
+# @Software : txfirefly
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 
@@ -25,9 +25,3 @@
 #
 #
 #
-from txfirefly.client import ClientNode
-
-class FastApiRpcClient(ClientNode):
-	
-	def run(self):
-		self.connectMaster()

@@ -37,10 +37,10 @@ def masterserviceHandle(target):
     将服务添加进入master节点
     """
     assert GlobalObject().masterremote != None,"请检查master节点是否正常运行"
-    GlobalObject().masterremote._reference._service.mapTarget(target)
+    GlobalObject().masterremote._reference._service.mapFunction(target)
 
 @masterserviceHandle
-def remoteConnect(name, remote : dict,app : List[str]):
+def remoteConnect(name, remote : dict, app : List[str]):
     '''
         控制 节点 连接 另一个节点
         :param name:  当前节点名称
@@ -58,23 +58,25 @@ def remoteConnect(name, remote : dict,app : List[str]):
     logger.debug(f"master 指令：当前节点 : {name} 连接节点 : {remote_name}")
     port = int(remote.get("PORT"))
     host = remote.get("HOST")
-    GlobalObject().remote_map[remote_name] = RemoteObject(name)
-    GlobalObject().remote_map[remote_name].setWeight(weight)
-    GlobalObject().remote_map[remote_name].connect((host, port))
+    GlobalObject().leaf.servicePath = app
+    GlobalObject().leafRemoteMap[remote_name] = RemoteObject(name, remote_name)
+    GlobalObject().leafRemoteMap[remote_name].setWeight(weight)
+    d = GlobalObject().leafRemoteMap[remote_name].connect((host, port))
     logger.debug(f"当前节点 : {name} 连接节点 : {remote_name} 成功 准备导入服务 : {app}")
-    GlobalObject().node.service_path = app
-    delay_import(app)
+    d.addCallback(
+        lambda ign: delay_import(app, 0)
+    )
+    return d
 
 @masterserviceHandle
 def serverStop():
     """
     """
     logger.debug('service stop !!!')
-    if GlobalObject().node:
-        GlobalObject().node._doWhenStop()
+    if GlobalObject().leaf:
+        GlobalObject().leaf._doWhenStop()
     from twisted.internet import reactor
     reactor.callLater(1, reactor.stop)
-    return True
 
 @masterserviceHandle
 def serverReload():
@@ -82,6 +84,6 @@ def serverReload():
     
     """
     logger.debug('service reload !!!')
-    if GlobalObject().node:
-        GlobalObject().node._doWhenReload()
+    if GlobalObject().leaf:
+        GlobalObject().leaf._doWhenReload()
     return True

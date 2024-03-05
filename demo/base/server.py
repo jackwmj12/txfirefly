@@ -38,10 +38,9 @@ import json
 
 import aiohttp
 import treq
-from txfirefly.exts.ffrequest import FFrequest
-from txfirefly.server import ServerNode
-from txrpc.distributed.manager import RemoteUnFindedError
-from txrpc.globalobject import GlobalObject
+from txfirefly.rpc.server import Server
+from txrpc.globalobject import GlobalObject, rootWhenLeafConnectHandle, rootWhenLeafLostConnectHandle, \
+    startServiceHandle
 from txrpc.server import RPCServer
 from loguru import logger
 
@@ -61,9 +60,9 @@ def fun():
         d.addErrback(lambda ign : reactor.stop())
     return d
 
-server = ServerNode("SERVER")
+server = Server("SERVER")
 
-@server.childConnectHandle
+@rootWhenLeafConnectHandle
 def doChildConnect(name, transport):
     '''
     :return
@@ -82,7 +81,7 @@ def doChildConnect(name, transport):
     # for i in range(100000):
     #     reactor.callLater(i * 0.2 + 1, fun)
 
-@server.childConnectHandle
+@rootWhenLeafConnectHandle
 async def fun2(name, transport):
     async with aiohttp.ClientSession() as session:
         url = 'http://httpbin.org'
@@ -90,7 +89,7 @@ async def fun2(name, transport):
             logger.debug(response.status)
             # logger.debug(await response.text())
 
-@server.startServiceHandle
+@startServiceHandle
 @defer.inlineCallbacks
 def fun3():
     resp = yield treq.get("http://httpbin.org")
@@ -98,7 +97,7 @@ def fun3():
     logger.debug(ret)
     return ret
 
-@server.childLostConnectHandle
+@rootWhenLeafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return

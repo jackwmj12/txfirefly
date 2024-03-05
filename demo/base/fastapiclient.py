@@ -32,6 +32,8 @@ import treq
 from fastapi import FastAPI
 from loguru import logger
 
+from txrpc.globalobject import startServiceHandle
+
 client = None
 
 app = FastAPI()
@@ -65,27 +67,27 @@ def register_rpc(app: FastAPI) -> None:
 		from twisted.internet import asyncioreactor
 		asyncioreactor.install(eventloop=loop)
 		
-		from txfirefly.client import ClientNode
+		from txfirefly.rpc.client import Client
 		from txrpc.globalobject import GlobalObject
 		from twisted.internet import defer
 		
 		with open("config.json", "r") as f:
 			GlobalObject().config = json.load(f)
 
-		app.state.client = ClientNode("CLIENT")
+		app.state.client = Client("CLIENT")
 		
-		@app.state.client.startServiceHandle
+		@startServiceHandle
 		def start():
 			logger.debug("i am start")
 		
-		@app.state.client.startServiceHandle
+		@startServiceHandle
 		@defer.inlineCallbacks
 		def start2():
 			ret = yield treq.get("http://httpbin.org")
 			logger.debug(ret)
 			defer.returnValue(ret)
 			
-		@app.state.client.startServiceHandle
+		@startServiceHandle
 		async def start3():
 			pass
 			# async with aiohttp.ClientSession() as session:

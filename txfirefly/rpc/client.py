@@ -27,38 +27,37 @@
 #
 from txfirefly.core.leafnode import leafNode
 from txrpc.client import RPCClient
-from txrpc.globalobject import GlobalObject
 
 
-class ClientNode(RPCClient,leafNode):
+class Client(RPCClient,leafNode):
     """
     :param
     """
-    def __init__(self, name : str, single=False):
+    def __init__(self, name : str):
         '''
             节点对象
         :param name:
         :param single:
         '''
-        super(ClientNode, self).__init__(name)
-        self.single = single
+        super(Client, self).__init__(name)
 
     def run(self):
         self.beforeRun()
+
         from twisted.internet import reactor
         reactor.run()
 
-    def install(self):
-        d = self._doWhenStart()
-        if not self.single:
-            d.addCallback(lambda ign: self.connectMaster())
-
     def prepare(self):
-        d = self._doWhenStart()
-        if not self.single:
-            d.addCallback(lambda ign: self.connectMaster())
+        return self._doWhenStart().addCallback(
+            lambda ign: self.connectMaster(
+                self.name
+            )
+        )
 
     def beforeRun(self):
-        d = self._doWhenStart()
-        if not self.single:
-            d.addCallback(lambda ign: self.connectMaster())
+        return self._doWhenStart().addCallback(
+            lambda ign: self.connectMaster(
+                self.name
+            )
+        )
+

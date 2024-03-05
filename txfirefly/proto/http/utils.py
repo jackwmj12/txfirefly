@@ -59,7 +59,7 @@ class FFdict():
 	def data(self):
 		return self._data
 
-class FFform(FFdict):
+class Form(FFdict):
 	
 	def __init__(self, request):
 		'''
@@ -70,19 +70,23 @@ class FFform(FFdict):
 		# logger.debug(request.content.getvalue().decode())
 		# logger.debug(request.contentType)
 		# logger.debug(request.content.getvalue().decode())
-		self.get_from(json.loads(request.content.getvalue().decode()))
+		self.get_from_request(
+			json.loads(
+				request.content.getvalue().decode()
+			)
+		)
 	
-	def get_from(self, args):
+	def get_from_request(self, args):
 		''':param'''
 		for k, v in args.items():
 			if k is not None:
 				self.set(k, v)
 		return self
-	
+
 	@property
-	def form(self):
+	def data(self):
 		return self._data
-	
+
 	@staticmethod
 	def get_item(request, key, default=None, type=str):
 		'''
@@ -91,8 +95,7 @@ class FFform(FFdict):
 		ret = json.loads(request.content.getvalue().decode()).get(key, default)
 		return type(ret)
 
-
-class FFargs(FFdict):
+class Params(FFdict):
 	
 	def __init__(self, request):
 		'''
@@ -103,7 +106,7 @@ class FFargs(FFdict):
 		self.get_from(request.args)
 	
 	@property
-	def args(self):
+	def data(self):
 		return self._data
 	
 	@staticmethod

@@ -29,7 +29,7 @@ from typing import Dict
 
 from twisted.internet import protocol
 
-from txfirefly.net.common.connection import Connection
+from txfirefly.proto.common.connection import Connection
 from loguru import logger
 
 
@@ -58,13 +58,13 @@ class ConnectionManager:
             加入一条连接
             @param _conn: Conn object
         '''
-        logger.debug(f"Connections add Connection: <{id}>")
+        # logger.debug(f"Connections add Connection: <{id}>")
         if id is not None and conn :
             if self.isInConnections(id):
                 logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
                 try:
                     self.loseConnectionByConnID(id)
-                    logger.debug(f"连接池 断开并移除原连接: <{id}>")
+                    # logger.debug(f"连接池 断开并移除原连接: <{id}>")
                 except Exception as e:
                     logger.error(f"连接池 移除连接失败 {e}")
             self._connections[id] = Connection(conn, id)

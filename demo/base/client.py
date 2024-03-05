@@ -37,23 +37,22 @@ import json
 import aiohttp
 from twisted.internet import defer
 
-from txfirefly.client import ClientNode
+from txfirefly.rpc.client import Client
 from txfirefly.exts.ffrequest import FFrequest
-from txrpc.globalobject import GlobalObject
-from txrpc.utils import asDeferred
+from txrpc.globalobject import GlobalObject, startServiceHandle
 
 from loguru import logger
 
 with open("config.json","r") as f:
 	GlobalObject().config = json.load(f)
 
-app = ClientNode("CLIENT")
+app = Client("CLIENT")
 
-@app.startServiceHandle
+@startServiceHandle
 def start():
 	logger.debug("i am start")
 
-@app.startServiceHandle
+@startServiceHandle
 @defer.inlineCallbacks
 def start2():
 	# async with aiohttp.ClientSession() as session:
@@ -64,7 +63,7 @@ def start2():
 	ret = yield FFrequest.get("http://httpbin.org")
 	defer.returnValue(ret)
 
-@app.startServiceHandle
+@startServiceHandle
 async def start3():
 	async with aiohttp.ClientSession() as session:
 		url = 'http://httpbin.org'

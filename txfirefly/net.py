@@ -1,8 +1,8 @@
 # !/usr/bin/env Python3
 # -*- coding: utf-8 -*-
 # @Author   : joe lin
-# @FILE     : server.py
-# @Time     : 2021-02-18 23:26
+# @FILE     : net.py
+# @Time     : 2024-03-05 17:02
 # @Software : txfirefly
 # @Email    : jackwmj12@163.com
 # @Github   : 
@@ -25,18 +25,20 @@
 #
 #
 #
-from txfirefly.core.leafnode import leafNode, GlobalObject
-from txrpc.server import RPCServer
+from loguru import logger
+from txfirefly.rpc.client import Client
+from txrpc.distributed.node import RemoteObject
+from txrpc.distributed.reference import ProxyReference
+from txrpc.globalobject import GlobalObject
 
-class ServerNode(RPCServer,leafNode):
-	"""
-	:param
-	"""
-	def __init__(self, name: str):
-		super(ServerNode, self).__init__(name)
-	
-	def run(self):
-		from twisted.internet import reactor
-		d = self._doWhenStart()
-		d.addCallback(lambda ign : self.connectMaster())
-		reactor.run()
+
+class Net(Client):
+
+    def __init__(self, name: str):
+        '''
+            节点对象
+        :param name:
+        :param single:
+        '''
+        super(Client, self).__init__(name)
+        GlobalObject().leaf = self

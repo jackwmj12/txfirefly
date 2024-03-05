@@ -31,9 +31,8 @@ from autobahn.twisted import WebSocketServerProtocol, WebSocketServerFactory
 from twisted.protocols import policies
 from txzmq import ZmqRequestTimeoutError
 
-from app.rpcapp.websocket.wsdatapack import WebsocketDataPackV1
-from txfirefly.net.common.manager import ConnectionManager
-from txfirefly.net.common.datapack import DataPackProtocol
+from txfirefly.proto.common.manager import ConnectionManager
+from txfirefly.proto.common.datapack import DataPackProtocol
 from txrpc.globalobject import GlobalObject
 from loguru import logger
 
@@ -51,7 +50,7 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
 
     def onConnect(self, request):
         logger.info("Client connecting: {}".format(request.peer))
-        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 30))
+        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 300))
         self.factory.doConnectionMade(self,self.transport.sessionno)
         self.datahandler = self.dataHandleCoroutine()
         self.datahandler.__next__()
@@ -91,7 +90,7 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
         :param isBinary:
         :return:
         '''
-        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 30))
+        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 300))
         self.datahandler.send(payload)
 
         # if isBinary:
@@ -133,7 +132,7 @@ class WebSocket(WebSocketServerProtocol,policies.TimeoutMixin):
 class WebSocketFactory(WebSocketServerFactory):
     protocol = WebSocket
 
-    def __init__(self, dataprotocl : Union[WebsocketDataPackV1,None] ):
+    def __init__(self, dataprotocl : Union[DataPackProtocol,None] ):
         super(WebSocketFactory,self).__init__()
         self.connmanager = ConnectionManager()
         self.dataprotocl = dataprotocl

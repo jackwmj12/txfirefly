@@ -56,7 +56,7 @@ class TaskManager():
 		"""
 		self.unDisplay.add(command)
 	
-	def mapTarget(self, target):
+	def mapFunction(self, target):
 		"""
 		Add a target to the service.
 		"""
@@ -71,7 +71,7 @@ class TaskManager():
 		finally:
 			self._lock.release()
 	
-	def unMapTarget(self, target):
+	def unmapFunction(self, target):
 		"""Remove a target from the service."""
 		self._lock.acquire()
 		try:
@@ -81,7 +81,7 @@ class TaskManager():
 		finally:
 			self._lock.release()
 	
-	def unMapTargetByKey(self, targetKey):
+	def unmapFunctionByKey(self, targetKey):
 		"""Remove a target from the service."""
 		self._lock.acquire()
 		try:

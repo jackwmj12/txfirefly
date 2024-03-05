@@ -100,9 +100,9 @@ if __name__ == '__main__':
 	
 	task_manager = TaskManager("task1")
 	
-	task_manager.mapTarget(test1())
-	task_manager.mapTarget(test2())
-	task_manager.mapTarget(test3())
+	task_manager.mapFunction(test1())
+	task_manager.mapFunction(test2())
+	task_manager.mapFunction(test3())
 	
 	runSchedul(task_manager, 5)
 	

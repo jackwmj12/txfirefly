@@ -26,14 +26,14 @@
 #
 #
 import threading
-from typing import Union, List
+from typing import Union, List, Dict
 
 from twisted.internet.defer import DeferredLock
 from twisted.protocols import policies
 from twisted.internet import protocol
 
-from txfirefly.net.common.manager import ConnectionManager
-from txfirefly.net.common.datapack import DataPackProtocol
+from txfirefly.proto.common.manager import ConnectionManager
+from txfirefly.proto.common.datapack import DataPackProtocol
 from txrpc.globalobject import GlobalObject
 from loguru import logger
 
@@ -45,10 +45,10 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
     _recv_buffer = b""                                               # 用于暂时存放接收到的数据
 
     def __init__(self):
-        self.lockBuffer = DeferredLock()
-        self.process_com_lock = threading.RLock()
-        self.conn_info = {}  # 连接信息
-        self.conn_id = None  # 连接唯一ID
+        self.lockBuffer: DeferredLock = DeferredLock()
+        self.process_com_lock: threading.RLock = threading.RLock()
+        self.conn_infoL: Dict = {}  # 连接信息
+        self.conn_id: Union[str, int, None] = None  # 连接唯一ID
         
     def connectionMade(self):
         '''
@@ -58,7 +58,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         '''
         logger.info('Client %d login in.[%s,%d]' % (self.transport.sessionno, self.transport.client[0], self.transport.client[1]))
         self.conn_id = self.transport.sessionno  # 连接ID
-        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 30))
+        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 300))
         logger.info('Client : {} {} connected...'.format(self.transport.client[0], self.transport.client[1]))
         self.datahandler = self.dataHandleCoroutine()  # 创建数据生成器
         self.datahandler.__next__()  # 创建一个生成器，当数据接收时，触发生成器
@@ -80,7 +80,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         数据到达处理
         @param data: str 客户端传送过来的数据
         '''
-        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 30))  # 添加超时定时器
+        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 300))  # 添加超时定时器
         self.datahandler.send(data)  # 触发datahandler生成器
 
     def dataHandleCoroutine(self):
@@ -89,7 +89,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         while True:
             data = yield
             self._recv_buffer += data
-            logger.debug("TCP recv <1>:{}".format([hex(x) for x in self._recv_buffer]))
+            # logger.debug("TCP recv <1>:{}".format([hex(x) for x in self._recv_buffer]))
 
     def timeoutConnection(self):
         logger.warning("客户端:{} 超时断开连接...".format((self.transport.client[0], self.transport.client[1])))
@@ -174,6 +174,7 @@ class BaseFactory(protocol.ServerFactory):
         产生客户端需要的最终结果
         @param response: str 分布式客户端获取的结果
         '''
+        # logger.debug(f"pack message success {command}")
         return self.dataprotocl.pack(command)
 
     def loseConnectionByConnID(self, connID):
@@ -192,7 +193,7 @@ class BaseFactory(protocol.ServerFactory):
         logger.debug("需要向：{}发送数据\n发送的数据为:{}".format(sendList,msg))
         return self.connmanager.pushObject(msg, sendList)
     
-    def resetConnID(self,sourceId,dstId):
+    def resetConnID(self,sourceId, dstId):
         '''
         :parameter
         '''
@@ -201,8 +202,8 @@ class BaseFactory(protocol.ServerFactory):
             self.connmanager.dropConnectionByID(sourceId)
             self.connmanager.addConnection(coon.instance,dstId)
             # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
-            logger.debug(f"连接池 连接重置 <{sourceId}> -> <{dstId}> 成功")
-        else:
-            # logger.error("the sourceId is not exist")
-            logger.debug(f"连接池 初始连接 <{sourceId}> 不存在")
+            # logger.debug(f"连接池 连接重置 <{sourceId}> -> <{dstId}> 成功")
+        # else:
+        #     # logger.error("the sourceId is not exist")
+        #     logger.debug(f"连接池 初始连接 <{sourceId}> 不存在")
             

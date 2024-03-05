@@ -1,8 +1,8 @@
 # !/usr/bin/env Python3
 # -*- coding: utf-8 -*-
 # @Author   : joe lin
-# @FILE     : clientapp.py
-# @Time     : 2021-02-19 0:35
+# @FILE     : server.py
+# @Time     : 2021-02-18 23:26
 # @Software : txfirefly
 # @Email    : jackwmj12@163.com
 # @Github   : 
@@ -25,19 +25,23 @@
 #
 #
 #
-
-from txrpc.globalobject import remoteServiceHandle
-from txrpc.client import RPCClient
 from loguru import logger
+from txfirefly.core.leafnode import leafNode, GlobalObject
+from txrpc.server import RPCServer
 
-def fun():
-	d = RPCClient.callRemote("SERVER", "server_test")
-	d.addCallback(logger.debug)
-	d.addErrback(logger.error)
-	return d
+class Server(RPCServer, leafNode):
+    """
+    :param
+    """
+    def __init__(self, name: str):
+        super(Server, self).__init__(name)
 
-@remoteServiceHandle("SERVER")
-def client_test():
-	from twisted.internet import reactor
-	reactor.callLater(1, fun)
-	return "this is a response from client"
+    def run(self):
+        from twisted.internet import reactor
+        d = self._doWhenStart()
+        d.addCallback(
+            lambda ign : self.connectMaster(
+                self.name,
+            )
+        )
+        reactor.run()
