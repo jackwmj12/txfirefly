@@ -55,9 +55,9 @@ def remoteConnect(name, remote : dict, app : List[str]):
         '''
     remote_name = remote.get("NAME")
     weight = remote.get("WEIGHT", 10)
-    logger.debug(f"master 指令：当前节点 : {name} 连接节点 : {remote_name}")
-    port = int(remote.get("PORT"))
     host = remote.get("HOST")
+    port = int(remote.get("PORT"))
+    logger.debug(f"master 指令：当前节点 : {name} 连接节点<{remote_name}>({host}:{port})")
     GlobalObject().leaf.servicePath = app
     GlobalObject().leafRemoteMap[remote_name] = RemoteObject(name, remote_name)
     GlobalObject().leafRemoteMap[remote_name].setWeight(weight)

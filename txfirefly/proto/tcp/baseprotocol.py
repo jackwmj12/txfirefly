@@ -200,7 +200,7 @@ class BaseFactory(protocol.ServerFactory):
         coon = self.connmanager.getConnectionByID(sourceId)
         if coon:
             self.connmanager.dropConnectionByID(sourceId)
-            self.connmanager.addConnection(coon.instance,dstId)
+            self.connmanager.addConnection(coon.instance, dstId)
             # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
             # logger.debug(f"连接池 连接重置 <{sourceId}> -> <{dstId}> 成功")
         # else:

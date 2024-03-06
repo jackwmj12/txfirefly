@@ -114,7 +114,7 @@ class TaskManager():
 			self._lock.acquire()
 			try:
 				if not target:
-					logger.error('the task ' + str(targetKey) + ' not Found on tasks in ' + self._name)
+					logger.error(f'the task {targetKey} not Found on tasks in service<{self._name}>')
 					return None
 				if targetKey not in self.unDisplay:
 					logger.warning("call method %s on tasks [single]" % target.__class__.__name__)
@@ -132,7 +132,7 @@ class TaskManager():
 			self._lock.acquire()
 			try:
 				if not target:
-					logger.error('the task ' + str(targetKey) + ' not Found on tasks in ' + self._name)
+					logger.error(f'the task {targetKey} not Found on tasks in service<{self._name}>')
 					return None
 				# logger.debug("call method %s on tasks [parallel]" % target.__class__.__name__)
 				result = threads.deferToThread(target.run, *args, **kwargs)

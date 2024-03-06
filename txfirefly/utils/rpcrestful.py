@@ -30,7 +30,7 @@ from typing import List, Union, Optional, Dict
 
 
 class RpcRestfulMethodEnum(enum.IntEnum):
-	CONNECT_ACK = 101
+	CONNECT = 101
 
 	PUSH = 200
 
