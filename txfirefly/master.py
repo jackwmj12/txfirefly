@@ -35,7 +35,7 @@ from txfirefly.proto.http.utils import Form
 from txfirefly.utils import restful
 from txrpc.distributed.child import NodeChild
 from txrpc.distributed.manager import Node
-from txrpc.globalobject import GlobalObject, rootWhenLeafConnectHandle, rootWhenLeafLostConnectHandle
+from txrpc.globalobject import GlobalObject, onRootWhenLeafConnectHandle, onRootWhenLeafLostConnectHandle
 from txrpc.server import RPCServer
 from txfirefly.core import *
 from functools import wraps
@@ -86,7 +86,7 @@ with app.subroute("/apis") as app:
         """
         return restful.success(
             data=list(
-                GlobalObject().rootRemoteMap.keys()
+                GlobalObject().leafRemoteMap.keys()
             )
         )
 
@@ -116,7 +116,7 @@ with app.subroute("/apis") as app:
         :parameter
         """
         deferred_list = []
-        for node in GlobalObject().root.pbRoot.dnsmanager._nodes.values():
+        for node in GlobalObject().app.pbRoot.dnsmanager._nodes.values():
             for remote in node.children:
                 if remote:
                     deferred_list.append(
@@ -139,7 +139,7 @@ with app.subroute("/apis") as app:
         :parameter
         """
         deferred_list = []
-        for node in GlobalObject().root.pbRoot.dnsmanager._nodes.values():
+        for node in GlobalObject().app.pbRoot.dnsmanager._nodes.values():
             for remote in node.children:
                 if remote:
                     deferred_list.append(
@@ -179,7 +179,7 @@ with app.subroute("/apis") as app:
             nodeNames = nodeNameStr.split(",")
 
             for nodeName in nodeNames:
-                node: Node = GlobalObject().root.pbRoot.dnsmanager.getNode(nodeName)
+                node: Node = GlobalObject().app.pbRoot.dnsmanager.getNode(nodeName)
                 if node and node.children:
                     for remote in node.children:
                         if remote:
@@ -203,7 +203,7 @@ with app.subroute("/apis") as app:
 		"""
         form = Form(request)
         nodeId = form.get("id", None, int)
-        remote: NodeChild = GlobalObject().root.pbRoot.dnsmanager.getChildById(nodeId)
+        remote: NodeChild = GlobalObject().app.pbRoot.dnsmanager.getChildById(nodeId)
         if remote:
             return remote.callbackNodeChild(
                 'serverStop'
@@ -215,7 +215,7 @@ with app.subroute("/apis") as app:
         return restful.server_error(message="指令下发失败")
 
 
-@rootWhenLeafConnectHandle
+@onRootWhenLeafConnectHandle
 def doChildConnect(name, transport):
     '''
     :return
@@ -232,12 +232,12 @@ def doChildConnect(name, transport):
     leaf_remote_names = [leaf_remote.upper() for leaf_remote in leaf_remotes]  # 获取root节点名字信息
     # 本端口信息存入global对象
     # 包含子节点的IP信息 子节点的父节点信息
-    GlobalObject().rootRemoteMap[current_leaf_key] = dict(current_leaf_config, **{"ID": id})
-    logger.debug(f"当前任务总节点信息: {GlobalObject().rootRemoteMap}")
+    GlobalObject().leafRemoteMap[current_leaf_key] = dict(current_leaf_config, **{"ID": id})
+    logger.debug(f"当前总节点信息: {GlobalObject().leafRemoteMap}")
     # 通知该节点去连接所有他需要连接的节点
     for leaf_remote_name in leaf_remote_names:
         # 判断需要连接的节点是否正在线
-        for leaf_remote in GlobalObject().rootRemoteMap.values():
+        for leaf_remote in GlobalObject().leafRemoteMap.values():
             if leaf_remote_name == leaf_remote["NAME"]:
                 leaf_remote_key = ":".join([leaf_remote["NAME"], str(leaf_remote["ID"])])
                 logger.debug(f"节点检查一：{name} 节点连接 remote 节点 : {leaf_remote_key}")
@@ -245,15 +245,15 @@ def doChildConnect(name, transport):
                     id,
                     "remoteConnect",
                     name,
-                    GlobalObject().rootRemoteMap.get(leaf_remote_key),
-                    GlobalObject().rootRemoteMap[current_leaf_key].get("APP", [])
+                    GlobalObject().leafRemoteMap.get(leaf_remote_key),
+                    GlobalObject().leafRemoteMap[current_leaf_key].get("APP", [])
                 )
                 break
             else:
                 logger.error(f"节点：{name} 连接:{leaf_remote_name} 失败。原因 ：节点 {leaf_remote_name} 暂未在线，连接失败")
 
     # 通知有需要连的node节点连接到此root节点
-    for leaf_remote in GlobalObject().rootRemoteMap.values():
+    for leaf_remote in GlobalObject().leafRemoteMap.values():
         leaf_remote_name = leaf_remote.get("NAME", "")
         leaf_remote_id = leaf_remote.get("ID", None)
         leaf_remote_remote_names = leaf_remote.get("REMOTE", [])
@@ -263,22 +263,22 @@ def doChildConnect(name, transport):
                 leaf_remote_id,
                 "remoteConnect",
                 name,
-                GlobalObject().rootRemoteMap[current_leaf_key],
+                GlobalObject().leafRemoteMap[current_leaf_key],
                 leaf_remote.get("APP", [])
             )
 
 
-@rootWhenLeafLostConnectHandle
+@onRootWhenLeafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return
     '''
     try:
         logger.debug("{} lost connect".format(childId))
-        for remote_item in GlobalObject().rootRemoteMap.values():
+        for remote_item in GlobalObject().leafRemoteMap.values():
             if childId == remote_item.get("ID"):
                 remote_key = ":".join([remote_item.get("NAME"), str(childId)])
-                del GlobalObject().rootRemoteMap[remote_key]
+                del GlobalObject().leafRemoteMap[remote_key]
                 break
     except Exception as e:
         logger.error(str(e))
@@ -296,7 +296,7 @@ class Master(RPCServer):
         '''
         # root对象监听制定端口
         super().__init__(name)
-        GlobalObject().root = self
+        GlobalObject().app = self
 
     def run(self):
         GlobalObject().webapp = app

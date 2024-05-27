@@ -30,10 +30,10 @@ from loguru import logger
 from txfirefly.rpc.server import Server
 from txrpc.distributed.node import RemoteObject
 from txrpc.distributed.reference import ProxyReference
-from txrpc.globalobject import GlobalObject, rootWhenLeafLostConnectHandle, rootWhenLeafConnectHandle
+from txrpc.globalobject import GlobalObject, onRootWhenLeafLostConnectHandle, onRootWhenLeafConnectHandle
 
 
-@rootWhenLeafConnectHandle
+@onRootWhenLeafConnectHandle
 def doChildConnect(name, transport):
     '''
     :return
@@ -44,7 +44,7 @@ def doChildConnect(name, transport):
     logger.debug(f"{remote_key} connected")
 
 
-@rootWhenLeafLostConnectHandle
+@onRootWhenLeafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return
@@ -67,5 +67,4 @@ class Gate(Server):
         '''
         # root对象监听制定端口
         super().__init__(name)
-        GlobalObject().root = self
-        GlobalObject().leaf = self
+        GlobalObject().app = self

@@ -50,13 +50,13 @@ from twisted.internet.ssl import ClientContextFactory
 from loguru import logger
 
 
-class JsonEncoder(json.JSONEncoder):
+class _Encoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, decimal.Decimal):
             return float(o)
         elif isinstance(o,datetime.datetime):
             return o.strftime('%Y-%m-%d %H:%M:%S')
-        super(JsonEncoder, self).default(o)
+        super(_Encoder, self).default(o)
 
 class WebClientContextFactory(ClientContextFactory):
     '''

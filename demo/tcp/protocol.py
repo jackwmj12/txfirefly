@@ -97,13 +97,12 @@ class TcpFactory(BaseFactory):
             通过gateway分发
         '''
 
-    def checkProtocol(self, data):
+    def unpackData(self, data):
         '''
             数据到达时的校验
             - 数据不足,返回数据不足标志 -2, 以及数据偏移量 0
             - 校验失败,返回校验失败标志 -1, 以及数据偏移量 1
             - 校验成功,返回校验成功标志 1, 以及数据偏移量 X
         '''
-        offset = 1
-        return PROTOCOL_CHECK_FAILED, offset
+        raise NotImplementedError()
 

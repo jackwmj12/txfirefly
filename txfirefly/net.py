@@ -41,4 +41,4 @@ class Net(Client):
         :param single:
         '''
         super(Client, self).__init__(name)
-        GlobalObject().leaf = self
+        GlobalObject().app = self

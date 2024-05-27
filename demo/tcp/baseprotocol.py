@@ -100,7 +100,7 @@ class BaseProtocol(protocol.Protocol, policies.TimeoutMixin):
             # logger.debug("TCP recv <1>:{}".format(
             #     [hex(x) for x in data]))
             while len(self._recv_buffer) >= self.getProtocolMinLength():
-                state, offset = self.factory.checkProtocol(self, data)
+                state, offset = self.factory.unpackData(self, data)
                 if state == PROTOCOL_CHECK_SUCCESS:  # 协议校验成功,收到一条完整协议
                     receivedData = self._recv_buffer[0, offset]
                     self.factory.doDataReceived(self, receivedData)

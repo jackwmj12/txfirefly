@@ -29,7 +29,7 @@ from loguru import logger
 from txfirefly.rpc.client import Client
 from txrpc.distributed.node import RemoteObject
 from txrpc.distributed.reference import ProxyReference
-from txrpc.globalobject import GlobalObject, LeafConnectRootSuccessHandle, LeafLostConnectRootHandle, LeafConnectRootFailedHandle
+from txrpc.globalobject import GlobalObject, onLeafWhenConnectRootSuccessHandle, onLeafWhenLostConnectRootHandle, onLeafWhenConnectRootFailedHandle
 
 class Service(Client):
     ''''''
@@ -40,4 +40,4 @@ class Service(Client):
         :param single:
         '''
         super(Client, self).__init__(name)
-        GlobalObject().leaf = self
+        GlobalObject().app = self

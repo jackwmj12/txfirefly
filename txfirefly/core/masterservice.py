@@ -58,10 +58,10 @@ def remoteConnect(name, remote : dict, app : List[str]):
     host = remote.get("HOST")
     port = int(remote.get("PORT"))
     logger.debug(f"master 指令：当前节点 : {name} 连接节点<{remote_name}>({host}:{port})")
-    GlobalObject().leaf.servicePath = app
-    GlobalObject().leafRemoteMap[remote_name] = RemoteObject(name, remote_name)
-    GlobalObject().leafRemoteMap[remote_name].setWeight(weight)
-    d = GlobalObject().leafRemoteMap[remote_name].connect((host, port))
+    GlobalObject().app.servicePath = app
+    GlobalObject().rootRemoteMap[remote_name] = RemoteObject(name, remote_name)
+    GlobalObject().rootRemoteMap[remote_name].setWeight(weight)
+    d = GlobalObject().rootRemoteMap[remote_name].connect((host, port))
     logger.debug(f"当前节点 : {name} 连接节点 : {remote_name} 成功 准备导入服务 : {app}")
     d.addCallback(
         lambda ign: delay_import(app, 0)
@@ -73,8 +73,6 @@ def serverStop():
     """
     """
     logger.debug('service stop !!!')
-    if GlobalObject().leaf:
-        GlobalObject().leaf._doWhenStop()
     from twisted.internet import reactor
     reactor.callLater(1, reactor.stop)
 
@@ -84,6 +82,6 @@ def serverReload():
     
     """
     logger.debug('service reload !!!')
-    if GlobalObject().leaf:
-        GlobalObject().leaf._doWhenReload()
+    if GlobalObject().app:
+        GlobalObject().app._doWhenReload()
     return True
