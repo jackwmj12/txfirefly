@@ -47,7 +47,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
     def __init__(self):
         self.lockBuffer: DeferredLock = DeferredLock()
         self.process_com_lock: threading.RLock = threading.RLock()
-        self.conn_infoL: Dict = {}  # 连接信息
+        self.conn_info: Dict = {}  # 连接信息
         self.conn_id: Union[str, int, None] = None  # 连接唯一ID
         
     def connectionMade(self):
@@ -57,12 +57,12 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         :return:
         '''
         logger.info('Client %d login in.[%s,%d]' % (self.transport.sessionno, self.transport.client[0], self.transport.client[1]))
-        self.conn_id = self.transport.sessionno  # 连接ID
-        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 300))
+        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 10 * 60))
         logger.info('Client : {} {} connected...'.format(self.transport.client[0], self.transport.client[1]))
         self.datahandler = self.dataHandleCoroutine()  # 创建数据生成器
         self.datahandler.__next__()  # 创建一个生成器，当数据接收时，触发生成器
-        self.factory.doConnectionMade(self,self.conn_id)
+        self.conn_id = self.transport.sessionno  # 连接ID
+        self.factory.doConnectionMade(self, self.conn_id)
     
     def connectionLost(self, reason):
         '''
@@ -71,7 +71,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         :param reason:
         :return:
         '''
-        logger.info('Client %d login out.' % (self.transport.sessionno))
+        # logger.info(f'Client<{self.transport.sessionno}|{self.conn_id}> login out.')
         self.setTimeout(None)
         self.factory.doConnectionLost(self, self.conn_id)
 
@@ -80,7 +80,7 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         数据到达处理
         @param data: str 客户端传送过来的数据
         '''
-        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 300))  # 添加超时定时器
+        self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 10 * 60))  # 添加超时定时器
         self.datahandler.send(data)  # 触发datahandler生成器
 
     def dataHandleCoroutine(self):
@@ -103,19 +103,20 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         '''
         self.transport.write(data)
 
-    def safeToWriteData(self,messages: Union[bytes,List[bytes]]):
+    def safeToWriteData(self, messages: Union[bytes,List[bytes]]):
         '''
         线程安全的向客户端发送数据
         @param data: str 要向客户端写的数据
         '''
         from twisted.internet import reactor
         if not self.transport.connected or not messages:
-            return
+            return False
         if isinstance(messages,list):
             for message in messages:
                 reactor.callFromThread(self._send_message, message)
         else:
             reactor.callFromThread(self._send_message, messages)
+        return True
 
     def safeWriteData(self,messages: bytes):
         '''
@@ -124,9 +125,9 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         '''
         from twisted.internet import reactor
         if not self.transport.connected or not messages:
-            return
+            return False
         reactor.callFromThread(self._send_message, messages)
-
+        return True
 
 class BaseFactory(protocol.ServerFactory):
     '''
@@ -147,35 +148,25 @@ class BaseFactory(protocol.ServerFactory):
         '''
         self.dataprotocl = dataprotocl          # 设置协议类
 
-    def doConnectionMade(self, conn : BaseProtocol, conn_id : str):
+    def doConnectionMade(self, conn: BaseProtocol, conn_id: str):
         '''
         当连接建立时的处理
         '''
-        self.connmanager.addConnection(conn,conn_id)
+        self.connmanager.addConnection(conn, conn_id)
     
     def doConnectionLost(self, conn : BaseProtocol, conn_id):
         '''
         连接断开时的处理
         '''
-        # logger.debug(conn)
-        # logger.debug(conn_id)
-        # logger.debug(self.connmanager.connections)
+        logger.info(f"Client<{conn_id}> lost connection")
         if conn == self.connmanager.getConnectionByID(conn_id).instance:
             self.connmanager.dropConnectionByID(conn_id)
-        logger.info("Clients residue : {}".format(self.connmanager.getNowConnCnt()))
+        logger.info(f"Clients residue : {self.connmanager.getNowConnCnt()}")
 
     def doDataReceived(self, conn, commandID, data):
         '''
         '''
         pass
-
-    def produceResult(self, command):
-        '''
-        产生客户端需要的最终结果
-        @param response: str 分布式客户端获取的结果
-        '''
-        # logger.debug(f"pack message success {command}")
-        return self.dataprotocl.pack(command)
 
     def loseConnectionByConnID(self, connID):
         """
@@ -183,27 +174,38 @@ class BaseFactory(protocol.ServerFactory):
         """
         self.connmanager.loseConnectionByConnID(connID)
 
-    def pushObject(self, msg, sendList):
+    def sendMessage(self, conn_id: str, msg: bytes):
         '''
         服务端向客户端推消息
-        @param topicID: int 消息的主题id号
-        @param msg: 消息的类容，protobuf 结构类型
-        @param sendList: 推向的目标列表(客户端id 列表)
+        @param conn_id: 需要发送的目标ID
+        @param msg: 消息的内容
         '''
-        logger.debug("需要向：{}发送数据\n发送的数据为:{}".format(sendList,msg))
-        return self.connmanager.pushObject(msg, sendList)
-    
+        return self.connmanager.pushMessageToConn(conn_id, msg)
+
     def resetConnID(self,sourceId, dstId):
         '''
         :parameter
         '''
-        coon = self.connmanager.getConnectionByID(sourceId)
-        if coon:
+        conn = self.connmanager.getConnectionByID(sourceId)
+        if conn:
             self.connmanager.dropConnectionByID(sourceId)
-            self.connmanager.addConnection(coon.instance, dstId)
+            conn.instance.conn_id = dstId
+            self.connmanager.addConnection(conn.instance, dstId)
             # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
-            # logger.debug(f"连接池 连接重置 <{sourceId}> -> <{dstId}> 成功")
-        # else:
-        #     # logger.error("the sourceId is not exist")
-        #     logger.debug(f"连接池 初始连接 <{sourceId}> 不存在")
-            
+            logger.debug(f"连接池 连接<{dstId}> 添加成功")
+        else:
+            # logger.error("the sourceId is not exist")
+            logger.debug(f"连接池 初始连接 <{sourceId}> 不存在")
+
+
+    def setConnInfo(self, connId, connInfo):
+        '''
+
+        :param connId:
+        :param connInfo:
+        :return:
+        '''
+        connection = self.connmanager.getConnectionByID(connId)
+        if connection and connection.instance:
+            connection.instance.conn_info.update(**connInfo)
+            logger.debug(f"客户端<{connId}> 重置连接信息成功 {connection.instance.conn_info}")

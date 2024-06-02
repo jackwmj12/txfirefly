@@ -50,8 +50,8 @@ class Connection:
         '''
         self.instance.transport.loseConnection()
 
-    def safeToWriteData(self,msg):
+    def safeToWriteData(self, msg):
         """
             发送消息
         """
-        self.instance.safeToWriteData(msg)
+        return self.instance.safeToWriteData(msg)

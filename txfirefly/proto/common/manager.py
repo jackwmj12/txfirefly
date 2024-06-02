@@ -101,6 +101,7 @@ class ConnectionManager:
         '''
         try:
             del self._connections[connID]
+            logger.debug(f"连接池 连接 <{connID}> 删除 成功")
         except Exception as e:
             logger.error(f"连接池 连接 <{connID}> 删除 失败 {e}")
 
@@ -123,31 +124,36 @@ class ConnectionManager:
                 logger.error(f"连接池 连接 <{connID}> 断开失败 {e}")
         self.dropConnectionByID(connID)
 
-    def pushObject(self, msg, sendList):
+    def pushMessageToConn(self, conn_id, msg):
         """
             通过连接ID,向该ID的连接发送数据
         """
-        logger.debug(f"NET端口 向 : {sendList} 推送数据 : {msg}")
-        if sendList:
-            if isinstance(sendList, list):
-                for target in sendList:
-                    try:
-                        conn = self.getConnectionByID(target)
-                        # logger.debug(f"连接池 获取到端口:{conn}")
-                        if conn:
-                            try:
-                                conn.safeToWriteData(msg)
-                            except Exception as e:
-                                logger.error(e)
-                        else:
-                            logger.debug(f"连接池 查无该对象 : {target}")
-                    except Exception as e:
-                        logger.error(str(e))
-                return True
-            else:
+        logger.debug(f"NET 端口 向 : {conn_id} 推送数据 : {msg}")
+        try:
+            conn = self.getConnectionByID(conn_id)
+            # logger.debug(f"连接池 获取到端口 : {conn}")
+            if conn:
                 try:
-                    conn = self.getConnectionByID(sendList)
-                    # logger.debug(f"连接池 获取到端口 : {conn}")
+                    conn.safeToWriteData(msg)
+                    return True
+                except Exception as e:
+                    logger.error(e)
+            else:
+                logger.debug(f"连接池 查无该对象:{conn_id}")
+        except Exception as e:
+            logger.error(str(e))
+        return False
+    
+    def publishMessage(self, conns, msg):
+        """
+            通过连接ID,向该ID的连接发送数据
+        """
+        logger.debug(f"NET端口 向 : {conns} 推送数据 : {msg}")
+        if conns:
+            for conn_id in conns:
+                try:
+                    conn = self.getConnectionByID(conn_id)
+                    # logger.debug(f"连接池 获取到端口:{conn}")
                     if conn:
                         try:
                             conn.safeToWriteData(msg)
@@ -155,7 +161,7 @@ class ConnectionManager:
                         except Exception as e:
                             logger.error(e)
                     else:
-                        logger.debug(f"连接池 查无该对象:{sendList}")
+                        logger.debug(f"连接池 查无该对象 : {conn_id}")
                 except Exception as e:
                     logger.error(str(e))
             return False

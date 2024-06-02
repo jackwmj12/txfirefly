@@ -220,52 +220,57 @@ def doChildConnect(name, transport):
     '''
     :return
     '''
-
-    name = name.upper()
-    id = transport.broker.transport.sessionno
-    current_leaf_key = ":".join([name, str(id)])
-    logger.debug(f"{current_leaf_key} connected")
-    current_leaf_config = GlobalObject().config.get("DISTRIBUTED", {}).get(name, {})
+    
+    current_leaf_name = name.upper()
+    current_leaf_id = transport.broker.transport.sessionno
+    current_leaf_key = ":".join([current_leaf_name, str(current_leaf_id)])
+    logger.debug(f"当前节点 <{current_leaf_key}> 连接成功")
+    current_leaf_config = GlobalObject().config.get("DISTRIBUTED", {}).get(current_leaf_name, {})
     # 远程端口信息存入root_list
     # 获取远程端口配置，以及名称 一般为10000，gate
-    leaf_remotes = current_leaf_config.get('REMOTE', [])
-    leaf_remote_names = [leaf_remote.upper() for leaf_remote in leaf_remotes]  # 获取root节点名字信息
+    current_leaf_remotes = current_leaf_config.get('REMOTE', [])
+    current_leaf_remote_names = [current_leaf_remote.upper() for current_leaf_remote in current_leaf_remotes]  # 获取root节点名字信息
+    # logger.debug(f"当前节点 <{current_leaf_key}> 需要连接节点 {leaf_remote_names}")
     # 本端口信息存入global对象
     # 包含子节点的IP信息 子节点的父节点信息
-    GlobalObject().leafRemoteMap[current_leaf_key] = dict(current_leaf_config, **{"ID": id})
-    logger.debug(f"当前总节点信息: {GlobalObject().leafRemoteMap}")
-    # 通知该节点去连接所有他需要连接的节点
-    for leaf_remote_name in leaf_remote_names:
-        # 判断需要连接的节点是否正在线
-        for leaf_remote in GlobalObject().leafRemoteMap.values():
-            if leaf_remote_name == leaf_remote["NAME"]:
-                leaf_remote_key = ":".join([leaf_remote["NAME"], str(leaf_remote["ID"])])
-                logger.debug(f"节点检查一：{name} 节点连接 remote 节点 : {leaf_remote_key}")
-                GlobalObject().callLeafByID(
-                    id,
-                    "remoteConnect",
-                    name,
-                    GlobalObject().leafRemoteMap.get(leaf_remote_key),
-                    GlobalObject().leafRemoteMap[current_leaf_key].get("APP", [])
-                )
-                break
-            else:
-                logger.error(f"节点：{name} 连接:{leaf_remote_name} 失败。原因 ：节点 {leaf_remote_name} 暂未在线，连接失败")
+    GlobalObject().leafRemoteMap[current_leaf_key] = dict(current_leaf_config, **{"ID": current_leaf_id})
+    logger.debug(f"当前总节点信息: {GlobalObject().leafRemoteMap.keys()}")
 
+    logger.debug(f"节点检查一：{current_leaf_key} 节点检查需要主动连接的节点")
+    # 通知该节点去连接所有他需要连接的节点
+    for current_leaf_remote_name in current_leaf_remote_names:
+        # 判断需要连接的节点是否正在线
+        for master_leaf_remote in GlobalObject().leafRemoteMap.values():
+            if current_leaf_remote_name == master_leaf_remote["NAME"]:
+                master_leaf_remote_key = ":".join([master_leaf_remote["NAME"], str(master_leaf_remote["ID"])])
+                logger.debug(f"节点检查一：{current_leaf_key} 节点连接 remote 节点 : {current_leaf_name}")
+                GlobalObject().callLeafByID(
+                    current_leaf_id,
+                    "remoteConnect",
+                    current_leaf_name, # 当前节点名称
+                    GlobalObject().leafRemoteMap.get(master_leaf_remote_key), # 对象节点KEY
+                    GlobalObject().leafRemoteMap[current_leaf_key].get("APP", []) # 挂载的服务路径
+                ).addCallback(logger.debug).addErrback(logger.error)
+            # else:
+            #     logger.error(f"节点：{current_leaf_key} 连接:{master_leaf_remote_name} 失败。原因 ：节点 {master_leaf_remote_name} 暂未在线，连接失败")
+
+    logger.debug(f"节点检查二：{current_leaf_key} 节点检查需要被动连接的节点")
     # 通知有需要连的node节点连接到此root节点
-    for leaf_remote in GlobalObject().leafRemoteMap.values():
-        leaf_remote_name = leaf_remote.get("NAME", "")
-        leaf_remote_id = leaf_remote.get("ID", None)
-        leaf_remote_remote_names = leaf_remote.get("REMOTE", [])
-        if name in leaf_remote_remote_names:
-            logger.debug(f"节点检查 发起：{leaf_remote_name} 节点连接 remote节点 : {name}")
+    logger.debug(f"============================> {GlobalObject().leafRemoteMap.values()}")
+    for master_leaf_remote in GlobalObject().leafRemoteMap.values():
+        master_leaf_remote_remote_names = master_leaf_remote.get("REMOTE", [])
+        if current_leaf_name in master_leaf_remote_remote_names:
+            master_leaf_remote_name = master_leaf_remote.get("NAME", "")
+            master_leaf_remote_id = master_leaf_remote.get("ID", None)
+            # leaf_remote_key = ":".join([name, str(leaf_remote["ID"])])
+            logger.debug(f"节点检查二 发起：{master_leaf_remote_name}:{master_leaf_remote_id} 节点连接 remote节点 : {current_leaf_name}")
             GlobalObject().callLeafByID(
-                leaf_remote_id,
+                master_leaf_remote_id,
                 "remoteConnect",
-                name,
-                GlobalObject().leafRemoteMap[current_leaf_key],
-                leaf_remote.get("APP", [])
-            )
+                master_leaf_remote_name, # 当前节点名称
+                GlobalObject().leafRemoteMap[current_leaf_key],  # 对象节点KEY
+                master_leaf_remote.get("APP", [])# 挂载的服务路径
+            ).addCallback(logger.debug).addErrback(logger.error)
 
 
 @onRootWhenLeafLostConnectHandle
@@ -290,15 +295,23 @@ class Master(RPCServer):
     :param
     '''
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, service_path = None, port=None):
         '''
         :return
         '''
         # root对象监听制定端口
-        super().__init__(name)
+        super().__init__(name, service_path, port)
         GlobalObject().app = self
+        GlobalObject().webapp = app
+        
 
     def run(self):
-        GlobalObject().webapp = app
-        GlobalObject().webapp.run(host=GlobalObject().config.get("WEB_HOST", "0.0.0.0"),
-                                  port=GlobalObject().config.get("WEB_PORT", 1024))
+        from twisted.internet import reactor
+        reactor.addSystemEventTrigger('after', 'startup', self._doWhenStart) # 绑定系统启动触发的hook函数
+        reactor.addSystemEventTrigger('before', 'shutdown', self._doWhenStop) # 绑定系统关闭触发的hook函数
+        
+        GlobalObject().webapp.run(
+            host=GlobalObject().config.get("WEB_HOST", "0.0.0.0"),
+            port=GlobalObject().config.get("WEB_PORT", 1024)
+        )
+        

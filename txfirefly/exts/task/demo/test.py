@@ -29,7 +29,7 @@
 
 import time
 
-from txfirefly.exts.fftask import Task, PARALLEL_STYLE, SchedulTask, TaskManager, runSchedul
+from txfirefly.exts.task import Task, PARALLEL_STYLE, SchedulTask, TaskManager, runSchedul
 from loguru import logger
 
 SCHEDUL_TIME = 5

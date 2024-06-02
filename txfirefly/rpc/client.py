@@ -25,11 +25,8 @@
 #
 #
 #
-from twisted.internet import defer
-
 from txfirefly.core.leafnode import leafNode
 from txrpc.client import RPCClient
-from txrpc.globalobject import GlobalObject
 
 
 class Client(RPCClient, leafNode):
@@ -45,24 +42,22 @@ class Client(RPCClient, leafNode):
         super(Client, self).__init__(name)
 
     def run(self):
+        self.beforeRun()
+
         from twisted.internet import reactor
         reactor.run()
 
-    def _doWhenStart(self) -> defer.Deferred:
-        '''
-                程序开始时,将会运行该函数
-        :return:
-        '''
-
-        deferList = []
-        for service in GlobalObject().startService:
-            deferList.append(
-                GlobalObject().startService.callFunction(service)
-            )
-        deferList.append(
+    def prepare(self):
+        return self._doWhenStart().addCallback(
             lambda ign: self.connectMaster(
                 self.name
             )
         )
-        return defer.DeferredList(deferList, consumeErrors=True)
+
+    def beforeRun(self):
+        return self._doWhenStart().addCallback(
+            lambda ign: self.connectMaster(
+                self.name
+            )
+        )
 

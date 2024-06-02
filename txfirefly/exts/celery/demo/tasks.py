@@ -28,7 +28,6 @@
 # from twisted.internet import reactor
 # from txcelery.defer import DeferrableTask
 #
-# from txfirefly.exts.ffcelery import create_celery
 #
 #
 # # demo

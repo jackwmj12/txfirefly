@@ -57,10 +57,11 @@ def remoteConnect(name, remote : dict, app : List[str]):
     weight = remote.get("WEIGHT", 10)
     host = remote.get("HOST")
     port = int(remote.get("PORT"))
-    logger.debug(f"master 指令：当前节点 : {name} 连接节点<{remote_name}>({host}:{port})")
+    logger.debug(f"master 指令：当前节点<{name}> 连接节点<{remote_name}>({host}:{port})")
     GlobalObject().app.servicePath = app
     GlobalObject().rootRemoteMap[remote_name] = RemoteObject(name, remote_name)
     GlobalObject().rootRemoteMap[remote_name].setWeight(weight)
+    logger.debug(f"当前节点 : {name} rootRemoteMap : {GlobalObject().rootRemoteMap}")
     d = GlobalObject().rootRemoteMap[remote_name].connect((host, port))
     logger.debug(f"当前节点 : {name} 连接节点 : {remote_name} 成功 准备导入服务 : {app}")
     d.addCallback(
@@ -73,6 +74,8 @@ def serverStop():
     """
     """
     logger.debug('service stop !!!')
+    if GlobalObject().app:
+        GlobalObject().app._doWhenStop()
     from twisted.internet import reactor
     reactor.callLater(1, reactor.stop)
 
