@@ -62,12 +62,15 @@ class ConnectionManager:
         if id is not None and conn :
             if self.isInConnections(id):
                 logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
-                try:
-                    self.loseConnectionByConnID(id)
-                    # logger.debug(f"连接池 断开并移除原连接: <{id}>")
-                except Exception as e:
-                    logger.error(f"连接池 移除连接失败 {e}")
-            self._connections[id] = Connection(conn, id)
+                # try:
+                #     self.loseConnectionByConnID(id)
+                #     # logger.debug(f"连接池 断开并移除原连接: <{id}>")
+                # except Exception as e:
+                #     logger.error(f"连接池 移除连接失败 {e}")
+                return False
+            else:
+                self._connections[id] = Connection(conn, id)
+                return True
 
     def isInConnections(self, id):
         '''

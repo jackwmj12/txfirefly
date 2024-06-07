@@ -186,16 +186,19 @@ class BaseFactory(protocol.ServerFactory):
         '''
         :parameter
         '''
-        conn = self.connmanager.getConnectionByID(sourceId)
-        if conn:
+        source_conn = self.connmanager.getConnectionByID(sourceId)
+        dst_conn = self.connmanager.getConnectionByID(dstId)
+        if source_conn and not dst_conn:
             self.connmanager.dropConnectionByID(sourceId)
-            conn.instance.conn_id = dstId
-            self.connmanager.addConnection(conn.instance, dstId)
+            source_conn.instance.conn_id = dstId
+            self.connmanager.addConnection(source_conn.instance, dstId)
             # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
-            logger.debug(f"连接池 连接<{dstId}> 添加成功")
+            logger.debug(f"连接池 连接重置 <{sourceId}> -> <{dstId}> 成功")
+            return True
         else:
             # logger.error("the sourceId is not exist")
-            logger.debug(f"连接池 初始连接 <{sourceId}> 不存在")
+            logger.debug(f"连接池 连接 <{sourceId}> 不存在 获取 连接 <{dstId}> 已存在")
+            return False
 
 
     def setConnInfo(self, connId, connInfo):
@@ -205,7 +208,12 @@ class BaseFactory(protocol.ServerFactory):
         :param connInfo:
         :return:
         '''
-        connection = self.connmanager.getConnectionByID(connId)
-        if connection and connection.instance:
-            connection.instance.conn_info.update(**connInfo)
-            logger.debug(f"客户端<{connId}> 重置连接信息成功 {connection.instance.conn_info}")
+        try:
+            connection = self.connmanager.getConnectionByID(connId)
+            if connection and connection.instance:
+                connection.instance.conn_info.update(**connInfo)
+                logger.debug(f"客户端<{connId}> 重置连接信息成功 {connection.instance.conn_info}")
+                return True
+        except Exception as e:
+            logger.error(e)
+        return False
