@@ -227,23 +227,22 @@ def doChildConnect(name, transport):
     logger.debug(f"当前节点 <{current_leaf_key}> 连接成功")
     current_leaf_config = GlobalObject().config.get("DISTRIBUTED", {}).get(current_leaf_name, {})
     # 远程端口信息存入root_list
-    # 获取远程端口配置，以及名称 一般为10000，gate
+    # 获取远程端口配置，以及名称 一般为10000，gate_od
     current_leaf_remotes = current_leaf_config.get('REMOTE', [])
     current_leaf_remote_names = [current_leaf_remote.upper() for current_leaf_remote in current_leaf_remotes]  # 获取root节点名字信息
-    # logger.debug(f"当前节点 <{current_leaf_key}> 需要连接节点 {leaf_remote_names}")
     # 本端口信息存入global对象
     # 包含子节点的IP信息 子节点的父节点信息
     GlobalObject().leafRemoteMap[current_leaf_key] = dict(current_leaf_config, **{"ID": current_leaf_id})
     logger.debug(f"当前总节点信息: {GlobalObject().leafRemoteMap.keys()}")
 
-    logger.debug(f"节点检查一：{current_leaf_key} 节点检查需要主动连接的节点")
+    logger.debug(f"节点检查一：{current_leaf_key} 节点检查需要主动连接的节点 {current_leaf_remote_names}")
     # 通知该节点去连接所有他需要连接的节点
     for current_leaf_remote_name in current_leaf_remote_names:
         # 判断需要连接的节点是否正在线
         for master_leaf_remote in GlobalObject().leafRemoteMap.values():
             if current_leaf_remote_name == master_leaf_remote["NAME"]:
                 master_leaf_remote_key = ":".join([master_leaf_remote["NAME"], str(master_leaf_remote["ID"])])
-                logger.debug(f"节点检查一：{current_leaf_key} 节点连接 remote 节点 : {current_leaf_name}")
+                logger.debug(f"节点检查一：{current_leaf_key} 节点连接 remote 节点 : {current_leaf_remote_name}")
                 GlobalObject().callLeafByID(
                     current_leaf_id,
                     "remoteConnect",
@@ -256,7 +255,6 @@ def doChildConnect(name, transport):
 
     logger.debug(f"节点检查二：{current_leaf_key} 节点检查需要被动连接的节点")
     # 通知有需要连的node节点连接到此root节点
-    logger.debug(f"============================> {GlobalObject().leafRemoteMap.values()}")
     for master_leaf_remote in GlobalObject().leafRemoteMap.values():
         master_leaf_remote_remote_names = master_leaf_remote.get("REMOTE", [])
         if current_leaf_name in master_leaf_remote_remote_names:
@@ -271,6 +269,7 @@ def doChildConnect(name, transport):
                 GlobalObject().leafRemoteMap[current_leaf_key],  # 对象节点KEY
                 master_leaf_remote.get("APP", [])# 挂载的服务路径
             ).addCallback(logger.debug).addErrback(logger.error)
+
 
 
 @onRootWhenLeafLostConnectHandle

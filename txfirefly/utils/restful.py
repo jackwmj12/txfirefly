@@ -34,7 +34,7 @@ unautherror = 401
 paramserror = 400
 servererror = 500
 
-def _alchemy_encoder(obj):
+def serialize_alchemy_encoder(obj):
     """
     处理序列化中的时间和小数
     :param obj:
@@ -60,7 +60,7 @@ def restful_result(code,message,data):
         allow_nan=False,
         indent=None,
         separators=(",", ":"),
-        default=_alchemy_encoder
+        default=serialize_alchemy_encoder
     ).encode("utf-8")
 
 def success(message="",data=None):

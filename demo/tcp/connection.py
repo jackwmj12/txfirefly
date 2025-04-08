@@ -25,6 +25,7 @@
 #
 #
 #
+from loguru import logger
 from twisted.internet import protocol
 
 
@@ -54,4 +55,5 @@ class Connection:
         """
             发送消息
         """
+        # logger.debug(f"TCP send msg {msg}")
         self.instance.safeToWriteData(msg)

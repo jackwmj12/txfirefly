@@ -26,6 +26,7 @@
 #
 #
 from loguru import logger
+
 from txfirefly.rpc.client import Client
 from txrpc.distributed.node import RemoteObject
 from txrpc.distributed.reference import ProxyReference
@@ -34,11 +35,11 @@ from txrpc.globalobject import GlobalObject
 
 class Net(Client):
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, isLeaf: bool = True):
         '''
             节点对象
         :param name:
         :param single:
         '''
-        super(Client, self).__init__(name)
+        super(Net, self).__init__(name, isLeaf=isLeaf)
         GlobalObject().app = self

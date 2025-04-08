@@ -25,14 +25,22 @@
 #
 #
 #
+from typing import Union, List
+
 from klein import Klein
+from loguru import logger
+
+from txrpc.utils import delay_import
+
 
 class KleinApp(Klein):
 
     def __init__(self):
         super().__init__()
-        self.service = None
 
-    def addServiceChannel(self, service):
-        '''添加服务通道'''
-        self.service = service
+
+    def registerRouter(self, routerPath: Union[List[str], str, None]):
+        ''''''
+        if routerPath:
+            logger.debug(f"导入 路由组件:{routerPath}")
+            delay_import(routerPath)

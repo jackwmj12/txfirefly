@@ -33,16 +33,13 @@ class Connection:
         连接实例
     '''
 
-    def __init__(self, _conn  : protocol.Protocol = None,id=None):
+    def __init__(self, _conn  : protocol.Protocol = None,peer_info= None):
         '''
             id 连接的ID
             _conn 连接的通道
         '''
-        if not id:
-            self.id = _conn.transport.sessionno
-        else:
-            self.id =id
-        self.instance : protocol.Protocol= _conn
+        self.peer_info = peer_info
+        self.instance: protocol.Protocol= _conn
 
     def loseConnection(self):
         '''

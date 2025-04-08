@@ -25,9 +25,10 @@
 #
 #
 #
-from typing import Dict
+import time
+from typing import Dict, Set
 
-from twisted.internet import protocol
+from twisted.internet.protocol import Protocol
 
 from txfirefly.proto.common.connection import Connection
 from loguru import logger
@@ -44,7 +45,8 @@ class ConnectionManager:
             初始化
             @param _connections: dict {connID:conn Object}
         '''
-        self._connections : Dict[str,Connection] = {}
+        self._connectionIdMap: Dict[str, str] = {}
+        self._connections: Dict[str, Connection] = {}
 
     def getNowConnCnt(self):
         '''
@@ -52,25 +54,6 @@ class ConnectionManager:
         '''
         cnt = len(self._connections.items())
         return cnt
-
-    def addConnection(self, conn : protocol.Protocol = None, id : str = None):
-        '''
-            加入一条连接
-            @param _conn: Conn object
-        '''
-        # logger.debug(f"Connections add Connection: <{id}>")
-        if id is not None and conn :
-            if self.isInConnections(id):
-                logger.warning(f"连接池 系统记录冲突: <{id}> 已经存在于 <{self._connections.keys()}>")
-                # try:
-                #     self.loseConnectionByConnID(id)
-                #     # logger.debug(f"连接池 断开并移除原连接: <{id}>")
-                # except Exception as e:
-                #     logger.error(f"连接池 移除连接失败 {e}")
-                return False
-            else:
-                self._connections[id] = Connection(conn, id)
-                return True
 
     def isInConnections(self, id):
         '''
@@ -97,16 +80,42 @@ class ConnectionManager:
         '''
         return self._connections.keys()
 
+    def addConnection(self, protocol: Protocol = None, id: str = None):
+        '''
+            加入一条连接
+            @param _conn: Conn object
+        '''
+        logger.info(f"ConnectionManager Client<{id}> add into connections")
+        if id is not None and protocol is not None:
+            if self.isInConnections(id):
+                logger.warning(f"ConnectionManager 连接池: 连接<{id}> 添加 失败, 系统记录冲突")
+                # try:
+                #     self.loseConnectionByConnID(id)
+                #     # logger.debug(f"连接池 断开并移除原连接: <{id}>")
+                # except Exception as e:
+                #     logger.error(f"连接池 移除连接失败 {e}")
+                return False
+            else:
+                transport = protocol.transport
+                peer_info = {
+                    'peer_host': transport.getPeer().host,
+                    'peer_port': transport.getPeer().port,
+                }
+                self._connections[id] = Connection(protocol, peer_info)
+                # logger.debug(f"Connections add <{id}> successful")
+                return True
+
     def dropConnectionByID(self, connID):
         '''
             通过连接id 删除连接实例
             @param connID: int 连接的id
         '''
         try:
-            del self._connections[connID]
-            logger.debug(f"连接池 连接 <{connID}> 删除 成功")
+            if self.isInConnections(connID):
+                del self._connections[connID]
+                logger.debug(f"ConnectionManager Connections Connection<{connID}> drop successful")
         except Exception as e:
-            logger.error(f"连接池 连接 <{connID}> 删除 失败 {e}")
+            logger.error(f"ConnectionManager Connections Connection<{connID}> drop failed {e}")
 
     def getConnectionByID(self, connID) -> Connection:
         """
@@ -125,7 +134,7 @@ class ConnectionManager:
                 conn.loseConnection()
             except Exception as e:
                 logger.error(f"连接池 连接 <{connID}> 断开失败 {e}")
-        self.dropConnectionByID(connID)
+        # self.dropConnectionByID(connID)
 
     def pushMessageToConn(self, conn_id, msg):
         """

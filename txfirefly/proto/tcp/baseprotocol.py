@@ -30,7 +30,7 @@ from typing import Union, List, Dict
 
 from twisted.internet.defer import DeferredLock
 from twisted.protocols import policies
-from twisted.internet import protocol
+from twisted.internet import protocol, reactor
 
 from txfirefly.proto.common.manager import ConnectionManager
 from txfirefly.proto.common.datapack import DataPackProtocol
@@ -42,13 +42,13 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
     自定义协议
     '''
     factory: Union["BaseFactory", None]
-    _recv_buffer = b""                                               # 用于暂时存放接收到的数据
 
     def __init__(self):
         self.lockBuffer: DeferredLock = DeferredLock()
         self.process_com_lock: threading.RLock = threading.RLock()
         self.conn_info: Dict = {}  # 连接信息
         self.conn_id: Union[str, int, None] = None  # 连接唯一ID
+        self._recv_buffer = b""  # 用于暂时存放接收到的数据
         
     def connectionMade(self):
         '''
@@ -56,9 +56,9 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         推荐重写，可以加入连接对象添加，连接数量统计
         :return:
         '''
-        logger.info('Client %d login in.[%s,%d]' % (self.transport.sessionno, self.transport.client[0], self.transport.client[1]))
+        logger.info('Client<%d> connected.[%s,%d]' % (self.transport.sessionno, self.transport.client[0], self.transport.client[1]))
         self.setTimeout(GlobalObject().config.get("TIME_OUT_COUNT", 10 * 60))
-        logger.info('Client : {} {} connected...'.format(self.transport.client[0], self.transport.client[1]))
+        # logger.info('Client : {} {} connected...'.format(self.transport.client[0], self.transport.client[1]))
         self.datahandler = self.dataHandleCoroutine()  # 创建数据生成器
         self.datahandler.__next__()  # 创建一个生成器，当数据接收时，触发生成器
         self.conn_id = self.transport.sessionno  # 连接ID
@@ -71,9 +71,10 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         :param reason:
         :return:
         '''
-        # logger.info(f'Client<{self.transport.sessionno}|{self.conn_id}> login out.')
+        logger.info(f'Client<{self.transport.sessionno}|{self.conn_id}> connection lost')
         self.setTimeout(None)
         self.factory.doConnectionLost(self, self.conn_id)
+        del self._recv_buffer
 
     def dataReceived(self, data):
         '''
@@ -89,7 +90,6 @@ class BaseProtocol(protocol.Protocol,policies.TimeoutMixin):
         while True:
             data = yield
             self._recv_buffer += data
-            # logger.debug("TCP recv <1>:{}".format([hex(x) for x in self._recv_buffer]))
 
     def timeoutConnection(self):
         logger.warning("客户端:{} 超时断开连接...".format((self.transport.client[0], self.transport.client[1])))
@@ -136,43 +136,65 @@ class BaseFactory(protocol.ServerFactory):
 
     protocol = BaseProtocol
 
-    def __init__(self, dataprotocl = DataPackProtocol()):
+    def __init__(self):
         '''
         初始化
         '''
         self.connmanager = ConnectionManager() # 连接管理器
-        self.dataprotocl = dataprotocl         # 协议类
-
-    def setDataProtocl(self, dataprotocl):
-        '''
-        '''
-        self.dataprotocl = dataprotocl          # 设置协议类
 
     def doConnectionMade(self, conn: BaseProtocol, conn_id: str):
         '''
         当连接建立时的处理
         '''
-        self.connmanager.addConnection(conn, conn_id)
-    
-    def doConnectionLost(self, conn : BaseProtocol, conn_id):
+        if self.connmanager.getNowConnCnt() >= GlobalObject().config.get("MAX_CONN_COUNT", 1024000):
+            # 超过当前连接上线,则断开连接
+            conn.transport.loseConnection()
+            logger.error(f"Client<{conn_id}> add connection failed, Clients residue : {self.connmanager.getNowConnCnt()}")
+        else:
+            self.connmanager.addConnection(conn, conn_id)
+            logger.info(f"Client<{conn_id}> add connection success, Clients residue : {self.connmanager.getNowConnCnt()}")
+
+    def doConnectionLost(self, conn: BaseProtocol, conn_id):
         '''
         连接断开时的处理
         '''
-        logger.info(f"Client<{conn_id}> lost connection")
-        if conn == self.connmanager.getConnectionByID(conn_id).instance:
+        conn_in_manager = self.connmanager.getConnectionByID(conn_id)
+        if conn_in_manager:
             self.connmanager.dropConnectionByID(conn_id)
-        logger.info(f"Clients residue : {self.connmanager.getNowConnCnt()}")
-
-    def doDataReceived(self, conn, commandID, data):
-        '''
-        '''
-        pass
+        logger.warning(f"Client<{conn_id}> lost connection success, Clients residue : {self.connmanager.getNowConnCnt()}")
 
     def loseConnectionByConnID(self, connID):
         """
         主动端口与客户端的连接
         """
         self.connmanager.loseConnectionByConnID(connID)
+
+    def resetConnID(self,sourceId, dstId):
+        '''
+
+        :param sourceId:    源连接ID
+        :param dstId:   目标连接ID
+        :return:
+        '''
+        source_conn = self.connmanager.getConnectionByID(sourceId)
+        if source_conn:
+            source_conn.instance.conn_id = dstId
+            if self.connmanager.addConnection(source_conn.instance, dstId):
+                self.connmanager.dropConnectionByID(sourceId)
+                # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
+                logger.debug(f"连接池 连接重置 <{sourceId}> -> <{dstId}> 成功")
+                return True
+            logger.error(f"连接池 目标连接 <{dstId}> 已存在")
+            return False
+        else:
+            # logger.error("the sourceId is not exist")
+            logger.error(f"连接池 源连接 <{sourceId}> 不存在")
+            return False
+
+    def doDataReceived(self, conn, commandID, data):
+        '''
+        '''
+        pass
 
     def sendMessage(self, conn_id: str, msg: bytes):
         '''
@@ -181,25 +203,6 @@ class BaseFactory(protocol.ServerFactory):
         @param msg: 消息的内容
         '''
         return self.connmanager.pushMessageToConn(conn_id, msg)
-
-    def resetConnID(self,sourceId, dstId):
-        '''
-        :parameter
-        '''
-        source_conn = self.connmanager.getConnectionByID(sourceId)
-        dst_conn = self.connmanager.getConnectionByID(dstId)
-        if source_conn and not dst_conn:
-            self.connmanager.dropConnectionByID(sourceId)
-            source_conn.instance.conn_id = dstId
-            self.connmanager.addConnection(source_conn.instance, dstId)
-            # logger.debug(f"reset the conn <{sourceId}> -> <{dstId}> success")
-            logger.debug(f"连接池 连接重置 <{sourceId}> -> <{dstId}> 成功")
-            return True
-        else:
-            # logger.error("the sourceId is not exist")
-            logger.debug(f"连接池 连接 <{sourceId}> 不存在 获取 连接 <{dstId}> 已存在")
-            return False
-
 
     def setConnInfo(self, connId, connInfo):
         '''

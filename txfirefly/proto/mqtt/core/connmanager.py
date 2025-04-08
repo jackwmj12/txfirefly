@@ -103,9 +103,9 @@ class ConnectionManager:
         try:
             if self.isInConnections(clinetID):
                 del self._connections[clinetID]
-                logger.error(f"连接池 连接 <{clinetID}> 删除 成功")
+                # logger.debug(f"Connections Connection<{clinetID}> drop successful")
         except Exception as e:
-            logger.error(f"连接池 连接 <{clinetID}> 删除 失败 {e}")
+            logger.error(f"Connections Connection<{clinetID}> drop failed {e}")
 
     def getConnectionByID(self, clinetID) -> Connection:
         """

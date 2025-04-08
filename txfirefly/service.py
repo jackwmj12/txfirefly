@@ -33,11 +33,11 @@ from txrpc.globalobject import GlobalObject, onLeafWhenConnectRootSuccessHandle,
 
 class Service(Client):
     ''''''
-    def __init__(self, name : str):
+    def __init__(self, name: str):
         '''
             节点对象
         :param name:
         :param single:
         '''
-        super(Client, self).__init__(name)
+        super(Service, self).__init__(name)
         GlobalObject().app = self

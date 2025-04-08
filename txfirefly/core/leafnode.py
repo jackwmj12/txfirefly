@@ -56,6 +56,7 @@ class leafNode:
 		logger.debug("connecting into master node...")
 		# node连接 master 节点，若连接不成功，则会退出服务
 		logger.debug(f"MASTER 节点 : {GlobalObject().masterremote}")
+
 		# ########################################
 		# 切勿删除本段代码
 		# 导入master服务，该服务主要提供

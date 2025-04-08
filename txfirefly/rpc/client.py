@@ -25,6 +25,8 @@
 #
 #
 #
+from loguru import logger
+
 from txfirefly.core.leafnode import leafNode
 from txrpc.client import RPCClient
 
@@ -33,13 +35,14 @@ class Client(RPCClient, leafNode):
     """
     :param
     """
-    def __init__(self, name : str):
+    def __init__(self, name : str, isLeaf: bool = True):
         '''
             节点对象
         :param name:
         :param single:
         '''
         super(Client, self).__init__(name)
+        self.isLeaf = isLeaf
 
     def run(self):
         self.beforeRun()
@@ -48,16 +51,22 @@ class Client(RPCClient, leafNode):
         reactor.run()
 
     def prepare(self):
-        return self._doWhenStart().addCallback(
-            lambda ign: self.connectMaster(
-                self.name
+        if self.isLeaf:
+            return self._doWhenStart().addCallback(
+                lambda ign: self.connectMaster(
+                    self.name
+                )
             )
-        )
+        else:
+            return self._doWhenStart()
 
     def beforeRun(self):
-        return self._doWhenStart().addCallback(
-            lambda ign: self.connectMaster(
-                self.name
+        if self.isLeaf:
+            return self._doWhenStart().addCallback(
+                lambda ign: self.connectMaster(
+                    self.name
+                )
             )
-        )
+        else:
+            return self._doWhenStart()
 
